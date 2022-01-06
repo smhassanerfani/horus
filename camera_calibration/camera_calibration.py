@@ -40,7 +40,7 @@ def calibrate_chessboard(imgs_path="./images", width=6, height=9, mode="RT"):
     """
 
     try:
-        os.makedirs(os.path.join(imgs_path, "cimgs")) #
+        os.makedirs(os.path.join(imgs_path, "cimages"))
     except FileExistsError:
         pass
 
@@ -90,9 +90,9 @@ def calibrate_chessboard(imgs_path="./images", width=6, height=9, mode="RT"):
                 corners2 = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
                 imgpoints.append(corners2)
                 
-                # Draw and display the cornersexit
+                # Draw and display the corners exit
                 cv2.drawChessboardCorners(img, (width, height), corners2, ret)
-                cv2.imwrite(f'{imgs_path}/cimgs/cimg-{counter:02d}.jpeg', img)
+                cv2.imwrite(f'{imgs_path}/cimages/cimg-{counter:02d}.jpeg', img)
                 counter += 1
 
         camera.stop_preview()
@@ -120,7 +120,7 @@ def calibrate_chessboard(imgs_path="./images", width=6, height=9, mode="RT"):
                 
                 # Draw and display the cornersexit
                 cv2.drawChessboardCorners(img, (width, height), corners2, ret)
-                cv2.imwrite(f'{imgs_path}/cimgs/c{fname.split("/")[-1].split(".")[0]}.jpeg', img)
+                cv2.imwrite(f'{imgs_path}/cimages/c{fname.split("/")[-1].split(".")[0]}.jpeg', img)
 
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
     rvecs = [arr.T for arr in rvecs]
@@ -128,12 +128,14 @@ def calibrate_chessboard(imgs_path="./images", width=6, height=9, mode="RT"):
     rvecs = np.concatenate(rvecs, axis=0)
     tvecs = np.concatenate(tvecs, axis=0)
 
+    print("Re-projection error estimation:")
+    
     mean_error = 0
     for idx, objpoint in enumerate(objpoints):
         imgpoints2, _ = cv2.projectPoints(objpoint, rvecs[idx], tvecs[idx], mtx, dist)
         error = cv2.norm(imgpoints[idx], imgpoints2, cv2.NORM_L2) / len(imgpoints2)
         mean_error += error
-    print("total error: {}".format(mean_error / len(objpoints)))
+    print(f"Total error: {mean_error / len(objpoints):.4f}")
 
     return (ret, mtx, dist, rvecs, tvecs)
 
