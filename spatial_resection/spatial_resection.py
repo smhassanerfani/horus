@@ -6,7 +6,7 @@ def pair_coordinates(image, object_dictionary, plot=False):
     bboxs, ids = find_aruco_markers(image, marker_size=5, total_markers=250, draw=True)
 
     if plot:
-        plot_aruco_markers(img, bboxs, ids)
+        plot_aruco_markers(image, bboxs, ids)
 
     ids = np.squeeze(ids)
     img_pts = []
@@ -16,7 +16,7 @@ def pair_coordinates(image, object_dictionary, plot=False):
         img_pts.append([bbox[0][0][0], bbox[0][0][1]])
         obj_pts.append(object_dictionary[int(id)])
 
-    return ids, np.array(img_pts, dtype=np.int32), np.array(obj_pts, dtype=np.float32)
+    return ids, np.array(img_pts, dtype=np.float32), np.array(obj_pts, dtype=np.float32)
 
 def spatial_resection(camera_properties, image_points, object_points):    
     camera_matrix, dist_coeffs, _, _ = load_coefficients(camera_properties)
@@ -30,13 +30,13 @@ def spatial_resection(camera_properties, image_points, object_points):
 
 if __name__ == "__main__":
 
-    aruco_obj_dict = object_dictionary("./object_points.txt")
+    aruco_obj_dict = object_dictionary("./aruco_object_coordinates.txt")
 
     image_path = "./2021-12-02-1504.jpg"
     image = cv2.imread(image_path)
 
     ids, image_points, object_points = pair_coordinates(image, aruco_obj_dict, plot=False)
 
-    if ids >= 6:
+    if len(ids) >= 6:
         camera_properties = "./camera_config.yml"
         spatial_resection(camera_properties, image_points, object_points)
