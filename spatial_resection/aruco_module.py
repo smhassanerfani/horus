@@ -3,6 +3,11 @@ from cv2 import aruco as aruco
 import numpy as np
 import os
 
+def object_dictionary(object_points):
+    object_ndarray = np.loadtxt(object_points, delimiter=",")
+
+    return {int(array[0]): array[1:].tolist() for array in object_ndarray}
+
 def load_coefficients(path):
     '''Loads camera matrix and distortion coefficients.'''
     # FILE_STORAGE_READ
