@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from aruco_module import object_dictionary, find_aruco_markers, plot_aruco_markers, load_coefficients
+from utils import object_dictionary, find_aruco_markers, plot_aruco_markers, load_coefficients
 
 def pair_coordinates(image, object_dictionary, plot=False):
     bboxs, ids = find_aruco_markers(image, marker_size=5, total_markers=250, draw=True)
