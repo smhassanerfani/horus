@@ -27,16 +27,14 @@ def spatial_resection(camera_properties, image_points, object_points):
     print(f"Translation Vector:\n {translation_vector}")
     return rotation_vector, translation_vector
 
+def main(image_path, aruco_coordinates_path, camera_config_path):
+    aruco_3D_dict = aruco_3D_to_dict(aruco_coordinates_path)
+    image = cv2.imread(image_path)
+    ids, image_points, object_points = pair_coordinates(image, aruco_3D_dict, plot=False)
+    
+    if len(ids) >= 6:
+        camera_properties = camera_config_path
+        spatial_resection(camera_properties, image_points, object_points)
 
 if __name__ == "__main__":
-
-    aruco_3D_dict = aruco_3D_to_dict("./aruco_object_coordinates.txt")
-
-    image_path = "./2021-12-02-1504.jpg"
-    image = cv2.imread(image_path)
-
-    ids, image_points, object_points = pair_coordinates(image, aruco_3D_dict, plot=False)
-
-    if len(ids) >= 6:
-        camera_properties = "./camera_config.yml"
-        spatial_resection(camera_properties, image_points, object_points)
+    main("./2021-12-02-1504.jpg", "./aruco_object_coordinates.txt", "./camera_config.yml")
