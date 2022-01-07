@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
-from utils import object_dictionary, find_aruco_markers, plot_aruco_markers, load_coefficients
+from utils import aruco_3D_to_dict, find_aruco_markers, plot_aruco_markers, load_coefficients
 
-def pair_coordinates(image, object_dictionary, plot=False):
+def pair_coordinates(image, aruco_3D_coordinates, plot=False):
     bboxs, ids = find_aruco_markers(image, marker_size=5, total_markers=250, draw=True)
 
     if plot:
@@ -14,7 +14,7 @@ def pair_coordinates(image, object_dictionary, plot=False):
 
     for idx, (id, bbox) in enumerate(zip(ids, bboxs)):
         img_pts.append([bbox[0][0][0], bbox[0][0][1]])
-        obj_pts.append(object_dictionary[int(id)])
+        obj_pts.append(aruco_3D_coordinates[int(id)])
 
     return ids, np.array(img_pts, dtype=np.float32), np.array(obj_pts, dtype=np.float32)
 
@@ -30,12 +30,12 @@ def spatial_resection(camera_properties, image_points, object_points):
 
 if __name__ == "__main__":
 
-    aruco_obj_dict = object_dictionary("./aruco_object_coordinates.txt")
+    aruco_3D_dict = aruco_3D_to_dict("./aruco_object_coordinates.txt")
 
     image_path = "./2021-12-02-1504.jpg"
     image = cv2.imread(image_path)
 
-    ids, image_points, object_points = pair_coordinates(image, aruco_obj_dict, plot=False)
+    ids, image_points, object_points = pair_coordinates(image, aruco_3D_dict, plot=False)
 
     if len(ids) >= 6:
         camera_properties = "./camera_config.yml"
