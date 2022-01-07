@@ -7,3 +7,9 @@
 
 # STEP 1: Camera Calibration
 1- Download the chessboard pattern [here](https://github.com/opencv/opencv/blob/4.x/doc/pattern.png).
+
+# STEP 2: Spatial Resection
+
+# STEP 3: 3D Point Cloud Transformation
+
+# STEP 3: 3D Point Cloud Reprojection
