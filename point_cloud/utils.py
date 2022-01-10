@@ -15,20 +15,25 @@ def transformation_matrix(lidar_coordinates, total_station_coordinates):
     Returns
     -------
     Rt: np.ndarray
-        Transformation matrix of shape `(3, 4)`.
+        Transformation matrix of shape `(3x4)`.
     """
     retval, Rt, inliers = cv2.estimateAffine3D(lidar_coordinates, total_station_coordinates)
     return Rt
 
-def voxel_grid_sampling(fname, voxel_size=0.02, homogeneous=True):
+def voxel_grid_sampling(fname, voxel_size=0.02, Rt=None, transformation=True):
     """a voxel grid structure is created and a representative data point is selected.
-    link: towardsdatascience.com/how-to-automate-lidar-point-cloud-processing-with-python-a027454a536c
+    Sub-sampling procedure is copied from:
+        towardsdatascience.com/how-to-automate-lidar-point-cloud-processing-with-python-a027454a536c
     parameters
     ----------
     fname: str
         Point cloud filename to read.
     voxel_size: float
         The length, width and height of the voxel (which is equal) in meter.
+    Rt: np.ndarray
+        Matrix transformation of shape `(3x4)`.
+    transformation: bool
+        If True, also return the transformed coordinates of sub-sampled point cloud.
     
     returns
     -------
@@ -57,9 +62,38 @@ def voxel_grid_sampling(fname, voxel_size=0.02, homogeneous=True):
         grid_candidate_center.append(voxel_grid[tuple(vox)][np.linalg.norm(voxel_grid[tuple(vox)] - np.mean(voxel_grid[tuple(vox)],axis=0),axis=1).argmin()])
         last_seen+=nb_pts_per_voxel[idx]
     
-    if homogeneous:
+    if transformation:
+        assert Rt is not None, "There is no Transformation Matrix!"
         sampling_size = idx + 1
         ones = np.ones(sampling_size).reshape(-1, 1)
-        return np.hstack((np.array(grid_candidate_center), ones)), np.hstack((np.array(grid_barycenter), ones))
+        grid_candidate_center = np.hstack((np.array(grid_candidate_center), ones))
+        grid_barycenter = np.hstack((np.array(grid_barycenter), ones))
+        return np.dot(Rt, grid_candidate_center.T).T, np.dot(Rt, grid_barycenter.T).T
     else:
         return np.array(grid_candidate_center), np.array(grid_barycenter)
+    
+
+def main():
+    total_station = np.array([
+        (0.000, 0.000, 0.000),
+        (-0.14,0.197,0.401), 
+        (-0.237,0.406,0.082), 
+        (0.194,0.725,0.386),
+        (0.247, 0.298, 0.728), 
+        (0.409, 1.000, 0.05)
+    ])
+
+    lidar_coor = np.array([
+        (-0.255972,0.78928,-0.877316),
+        (-0.025972,0.707672,-0.477316),
+        (0.199295,0.670137,-0.792316),
+        (0.374028,1.177497,-0.492316),
+        (-0.040972,1.098403,-0.147316),
+        (0.584028,1.452949,-0.827316)
+    ])
+
+    Rt = transformation_matrix(lidar_coor, total_station)
+    grid_candidate_center, _ = voxel_grid_sampling("EveryPoint.txt", voxel_size=0.02, Rt=Rt, transformation=True)
+
+if __name__ == "__main__":
+    main()
