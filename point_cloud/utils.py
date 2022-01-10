@@ -20,7 +20,7 @@ def transformation_matrix(lidar_coordinates, total_station_coordinates):
     retval, Rt, inliers = cv2.estimateAffine3D(lidar_coordinates, total_station_coordinates)
     return Rt
 
-def voxel_grid_sampling(fname, voxel_size=0.02):
+def voxel_grid_sampling(fname, voxel_size=0.02, homogeneous=True):
     """a voxel grid structure is created and a representative data point is selected.
     link: towardsdatascience.com/how-to-automate-lidar-point-cloud-processing-with-python-a027454a536c
     parameters
@@ -56,5 +56,10 @@ def voxel_grid_sampling(fname, voxel_size=0.02):
         grid_barycenter.append(np.mean(voxel_grid[tuple(vox)],axis=0))
         grid_candidate_center.append(voxel_grid[tuple(vox)][np.linalg.norm(voxel_grid[tuple(vox)] - np.mean(voxel_grid[tuple(vox)],axis=0),axis=1).argmin()])
         last_seen+=nb_pts_per_voxel[idx]
-
-    return np.array(grid_candidate_center), np.array(grid_barycenter)
+    
+    if homogeneous:
+        sampling_size = idx + 1
+        ones = np.ones(sampling_size).reshape(-1, 1)
+        return np.hstack((np.array(grid_candidate_center), ones)), np.hstack((np.array(grid_barycenter), ones))
+    else:
+        return np.array(grid_candidate_center), np.array(grid_barycenter)
