@@ -93,7 +93,10 @@ def main():
     ])
 
     Rt = transformation_matrix(lidar_coor, total_station)
-    grid_candidate_center, _ = voxel_grid_sampling("EveryPoint.txt", voxel_size=0.02, Rt=Rt, transformation=True)
+    print(f"transformation_matrix is: {Rt}")
+    grid_candidate_center, grid_barycenter = voxel_grid_sampling("EveryPoint.txt", voxel_size=0.02, Rt=Rt, transformation=True)
+    print(f"The number of closest candidate to the barycenter of each voxel after sub-sampling: {grid_candidate_center.shape}")
+    print(f"The number of barycenter of the points in voxels after sub-sampling: {grid_barycenter.shape}")
 
 if __name__ == "__main__":
     main()
