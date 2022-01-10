@@ -12,4 +12,4 @@
 
 # STEP 3: 3D Point Cloud Transformation
 
-# STEP 3: 3D Point Cloud Reprojection
+# STEP 3: 3D to 2D Reprojection
