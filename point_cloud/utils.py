@@ -72,6 +72,33 @@ def voxel_grid_sampling(fname, voxel_size=0.02, Rt=None, transformation=True):
     else:
         return np.array(grid_candidate_center), np.array(grid_barycenter)
     
+def perspective_projection(point_cloud, rvec, tvec, camera_matrix, dist_coeffs):
+    """Projects 3D points to an image plane.
+    Parameters
+    ----------
+    point_cloud: np.ndarray
+        Transformed and sub-sampled point cloud of shape (N x 3).
+    rvec: np.ndarray
+        The rotation vector which is estimated by `spatial resection`.
+    tvec: np.ndarray
+        The translation vector which is estimated by `spatial resection`.
+    camera_matrix: np.ndarray
+        Camera intrinsic matrix. 
+    dist_coeffs: np.ndarray
+        Input vector of distortion coefficients.
+    
+    Returns
+    -------
+    projected_points: np.ndarray
+        Output array of image points of shape (N x 2).
+    """
+    
+    point_cloud2D = []
+    for coordinate in point_cloud:
+        (point2D, jacobian) = cv2.projectPoints(np.array(coordinate), rvec, tvec, camera_matrix, dist_coeffs)
+        point_cloud2D.append(point2D)
+
+    return np.array(np.squeeze(point_cloud2D))
 
 def main():
     total_station = np.array([
