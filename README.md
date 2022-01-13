@@ -1,4 +1,6 @@
-# SVisionS: Stage Vision Sensing
+# Eye of Horus
+
+The "Eye of Horus" is a concept and symbol in ancient Egyptian religion that represents well-being, healing, and protection. The Eye of Horus symbol, a stylized eye with distinctive markings, was believed to have protective magical power and appeared frequently in ancient Egyptian art.
 
 <p align="center">
   <img width="100%" height="100%" src="https://github.com/smhassanerfani/svisions/blob/main/wiki/wss-banner-staff-gage.jpg">
