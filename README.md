@@ -20,6 +20,12 @@ The "Eye of Horus" is a concept and symbol in ancient Egyptian religion that rep
 ## Computer Vision
 ### Camera Calibration
 <!-- https://learnopencv.com/camera-calibration-using-opencv/ -->
+The process of estimating the parameters of a camera is called camera calibration.
+
+This means we have all the information (parameters or coefficients) about the camera required to determine an accurate relationship between a 3D point in the real world and its corresponding 2D projection (pixel) in the image captured by that calibrated camera.
+
+Typically this means recovering two kinds of parameters. First, internal parameters of the camera/lens system e.g., focal length, optical center, and radial distortion coefficients of the lens. Second, external parameters refering to the orientation (rotation and translation) of the camera with respect to some world coordinate system.
+
 #### Understanding Lens Distortion
 <!-- https://learnopencv.com/understanding-lens-distortion/ -->
 <!-- https://docs.opencv.org/2.4/doc/tutorials/calib3d/camera_calibration/camera_calibration.html -->
@@ -36,16 +42,29 @@ By using a lens we get better quality images but the lens introduces some distor
 
   * Pincushion distortion effect, which corresponds to a positive radial displacement.
 
-* **Tangential distortion**: This usually occurs when image screen or sensor is at an angle w.r.t the lens. Thus the image seem to be tilted and stretched.
+* **Tangential distortion**: This usually occurs when image screen or sensor is at an angle with respect to the lens, i.e., lenses are not perfectly parallel to the imaging plane. Thus the image seem to be tilted and stretched.
 
 Radial distortion can be represented as follows:
 
+x<sub>u</sub> = x(1 + k<sub>1</sub>r<sup>2</sup> + k<sub>2</sub>r<sup>4</sup> + k<sub>3</sub>r<sup>6</sup>)
+
+y<sub>u</sub> = y(1 + k<sub>1</sub>r<sup>2</sup> + k<sub>2</sub>r<sup>4</sup> + k<sub>3</sub>r<sup>6</sup>)
+
+Where, (x<sub>u</sub>, y<sub>u</sub>) represents pixel point coordinates on the corrected output image.
+
 The amount of tangential distortion can be represented as below:
+
+x<sub>u</sub> = x + [2p<sub>1</sub>xy + p<sub>2</sub>(r<sup>2</sup> + 2x<sup>2</sup>)]
+
+y<sub>u</sub> = y + [p<sub>1</sub>(r<sup>2</sup> + 2y<sup>2</sup>) + 2p<sub>2</sub>xy]
+
 
 we need to find five parameters, known as distortion coefficients given by:
 
+Distortion Coefficients: (k<sub>1</sub>, k<sub>2</sub>, p<sub>1</sub>, p<sub>2</sub>, k<sub>3</sub>)
+
 #### Intrinsic Parameters
-Intrinsic parameters are specific to a camera. They include information like focal length ( fx,fy) and optical centers ( cx,cy). The focal length and optical centers can be used to create a camera matrix, which can be used to remove distortion due to the lenses of a specific camera. The camera matrix is unique to a specific camera, so once calculated, it can be reused on other images taken by the same camera. It is expressed as a 3x3 matrix
+Intrinsic parameters are specific to a camera. They include information like focal length (f<sub>x</sub>, f<sub>y</sub>) and optical centers (c<sub>x</sub>, c<sub>y</sub>). The focal length and optical centers can be used to create a camera matrix, which can be used to remove distortion due to the lenses of a specific camera. The camera matrix is unique to a specific camera, so once calculated, it can be reused on other images taken by the same camera. It is expressed as a 3x3 matrix.
 
 #### Extrinsic parameters
 Extrinsic parameters corresponds to rotation and translation vectors which translates a coordinates of a 3D point to a coordinate system.
