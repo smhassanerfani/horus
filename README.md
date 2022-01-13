@@ -20,7 +20,6 @@ The "Eye of Horus" is a concept and symbol in ancient Egyptian religion that rep
 ## Raspberry Pi
 ## Computer Vision
 ### Camera Calibration
-<!-- https://learnopencv.com/camera-calibration-using-opencv/ -->
 The process of estimating the parameters of a camera is called camera calibration.
 
 This means we have all the information (parameters or coefficients) about the camera required to determine an accurate relationship between a 3D point in the real world and its corresponding 2D projection (pixel) in the image captured by that calibrated camera [[1]](#1).
@@ -28,8 +27,7 @@ This means we have all the information (parameters or coefficients) about the ca
 Typically this means recovering two kinds of parameters. First, internal parameters of the camera/lens system e.g., focal length, optical center, and radial distortion coefficients of the lens. Second, external parameters refering to the orientation (rotation and translation) of the camera with respect to some world coordinate system [[1]](#1).
 
 #### Understanding Lens Distortion
-<!-- https://learnopencv.com/understanding-lens-distortion/ -->
-<!-- https://docs.opencv.org/2.4/doc/tutorials/calib3d/camera_calibration/camera_calibration.html -->
+<!-- https://docs.opencv.org/4.5.5/d9/d0c/group__calib3d.html -->
 To generate clear and sharp images the diameter of the aperture (hole) of a pinhole camera should be as small as possible. If we increase the size of the aperture, we know that rays from multiple points of the object would be incident on the same part of the screen creating a blurred image. On the other hand, if we make the aperture size small, only a small number of photons hit the image sensor. As a result the image is dark and noisy [[2]](#2).
   
 So, smaller the aperture of the pinhole camera, more focused is the image but, at the same time, darker and noisier it is. While, with a larger aperture, the image sensor receives more photons (and hence more signal). This leads to a bright image with only a small amount of noise [[2]](#2).
