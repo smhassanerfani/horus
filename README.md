@@ -44,8 +44,11 @@ The amount of tangential distortion can be represented as below:
 
 we need to find five parameters, known as distortion coefficients given by:
 
-  * Intrinsic Parameters
-  * Extrinsic parameters
+#### Intrinsic Parameters
+Intrinsic parameters are specific to a camera. They include information like focal length ( fx,fy) and optical centers ( cx,cy). The focal length and optical centers can be used to create a camera matrix, which can be used to remove distortion due to the lenses of a specific camera. The camera matrix is unique to a specific camera, so once calculated, it can be reused on other images taken by the same camera. It is expressed as a 3x3 matrix
+
+#### Extrinsic parameters
+Extrinsic parameters corresponds to rotation and translation vectors which translates a coordinates of a 3D point to a coordinate system.
 
 ### Spatial Resection
 <!--   https://learnopencv.com/head-pose-estimation-using-opencv-and-dlib/ -->
