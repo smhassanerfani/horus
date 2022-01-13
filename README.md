@@ -7,11 +7,22 @@ The "Eye of Horus" is a concept and symbol in ancient Egyptian religion that rep
   Figure 1. A staff gage gives a quick estimate of gage height (stage) of a river. Photo by <a href="https://www.usgs.gov/special-topics/water-science-schoo">Water Science School</a> on <a href="https://www.usgs.gov/media/images/a-staff-gage-gives-a-quick-estimate-gage-height-stage-a-river">USGS.gov</a>.
 </p>
 
-# STEP 1: Camera Calibration
-1- Download the chessboard pattern [here](https://github.com/opencv/opencv/blob/4.x/doc/pattern.png).
+## Table of contents
 
-# STEP 2: Spatial Resection
+- [Field Survey](#Field-Survey)
+- [Raspberry Pi](#Raspberry-Pi)
+- [Computer Vision](#Computer-Vision)
+- [Machine Learning](#Machine-Learning)
 
-# STEP 3: 3D Point Cloud Transformation
 
-# STEP 3: 3D to 2D Reprojection
+## Field Survey
+## Raspberry Pi
+## Computer Vision
+## Machine Learning
+
+<!-- 1- Download the chessboard pattern [here](https://github.com/opencv/opencv/blob/4.x/doc/pattern.png). -->
+<!-- ## STEP 2: Spatial Resection
+## STEP 3: 3D Point Cloud Transformation
+## STEP 3: 3D to 2D Reprojection -->
+
+
