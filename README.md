@@ -27,7 +27,6 @@ This means we have all the information (parameters or coefficients) about the ca
 Typically this means recovering two kinds of parameters. First, internal parameters of the camera/lens system e.g., focal length, optical center, and radial distortion coefficients of the lens. Second, external parameters refering to the orientation (rotation and translation) of the camera with respect to some world coordinate system [[1]](#1).
 
 #### Understanding Lens Distortion
-<!-- https://docs.opencv.org/4.5.5/d9/d0c/group__calib3d.html -->
 To generate clear and sharp images the diameter of the aperture (hole) of a pinhole camera should be as small as possible. If we increase the size of the aperture, we know that rays from multiple points of the object would be incident on the same part of the screen creating a blurred image. On the other hand, if we make the aperture size small, only a small number of photons hit the image sensor. As a result the image is dark and noisy [[2]](#2).
   
 So, smaller the aperture of the pinhole camera, more focused is the image but, at the same time, darker and noisier it is. While, with a larger aperture, the image sensor receives more photons (and hence more signal). This leads to a bright image with only a small amount of noise [[2]](#2).
@@ -71,6 +70,7 @@ Extrinsic parameters corresponds to rotation and translation vectors which trans
 ### Spatial Resection
 <!--   https://learnopencv.com/head-pose-estimation-using-opencv-and-dlib/ -->
 ### 3D to 2D Projection
+<!-- https://docs.opencv.org/4.5.5/d9/d0c/group__calib3d.html -->
 <!--   https://learnopencv.com/geometry-of-image-formation/ -->
 ## Machine Learning
 
