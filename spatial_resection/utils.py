@@ -48,8 +48,10 @@ def find_aruco_markers(img, marker_size=5, total_markers=50, draw=True):
 def main():
     cap = cv2.VideoCapture(0)
 
-    while True:
+    while (True):
         success, img = cap.read()
+        #img = cv2.rotate(img, cv2.ROTATE_180) #cv2.ROTATE_90_COUNTERCLOCKWISE
+        #img = cv2.flip(img, 0)
         bboxs, ids = find_aruco_markers(img)
 
         if (ids is not None):
@@ -57,8 +59,10 @@ def main():
                 cv2.putText(img, str(id), (bbox[0][0][0], bbox[0][0][1]), cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 255), 1)
 
         cv2.imshow("Image", img)
-        cv2.waitKey(1)
-
+        if  cv2.waitKey(1) & 0xFF == ord("q"):
+            break
+    cap.release()
+    cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     main()
