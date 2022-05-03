@@ -17,6 +17,8 @@ The "Eye of Horus" is a concept and symbol in ancient Egyptian religion that rep
 
 
 ## Field Survey
+
+![alt text](https://github.com/smhassanerfani/horus/blob/main/animation2%20(1).gif "Point Cloud Representation")
 ## Raspberry Pi
 ## Computer Vision
 ### Camera Calibration
