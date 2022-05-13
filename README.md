@@ -20,6 +20,7 @@ The "Eye of Horus" is a concept and symbol in ancient Egyptian religion that rep
 
 ![alt text](https://github.com/smhassanerfani/horus/blob/main/wiki/pointcloudanimation.gif "Point Cloud Representation")
 ## Raspberry Pi
+![alt text](https://github.com/smhassanerfani/horus/blob/main/wiki/meena.gif "Meena")
 ## Computer Vision
 ### Camera Calibration
 The process of estimating the parameters of a camera is called camera calibration.
