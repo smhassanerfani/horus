@@ -29,13 +29,6 @@
 #define ECHO_PIN  8     
 #define MAX_DIST 400
 
-// define payload characteristics
-static char send_payload[256]; 
- const int min_payload_size = 4;
- const int max_payload_size = 32;
- const int payload_size_increments_by = 1;
- int next_payload_size = min_payload_size;
-
 // construct ultrasonic sensor
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DIST);
 
@@ -44,14 +37,13 @@ RF24 radio(7, 6);
 
 // Radio pipe addresses for the 2 nodes to communicate.
 const uint64_t pipes[2] = {0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL};
- char receive_payload[max_payload_size + 1]; // why?
 
 // initialise the clock
 RTC_DS3231 rtc;
 char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 
 // set transmission interval in ms
-int send_interval = 5000;
+// int send_interval = 10;
 
 // why? we define a function but we never used it
 void setup() {
@@ -68,7 +60,8 @@ void setup() {
   // begin the clock
   rtc.begin();
 
-  // uncomment to set the date and time of the RTC to when the sketch was compiled (only if the clock has never been initialized)
+  // uncomment to set the date and time of the RTC to when the sketch was compiled 
+  // (only if the clock has never been initialized)
   //rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
 
   // initialize radio
@@ -79,7 +72,7 @@ void setup() {
 
   // Set the speed of trasmission to the quickest/ longest available
   // RF24_250KBPS for 250kbs, RF24_1MBPS for 1Mbps, or RF24_2MBPS for 2Mbps
-  radio.setDataRate(RF24_1MBPS);
+  radio.setDataRate(RF24_250KBPS);
 
   // Set RF communication channel (0-127).
   radio.setChannel(124);
@@ -116,35 +109,27 @@ void loop() {
     Serial.print("Sending Data :");
     Serial.print(water_level);
     Serial.println(" cm");
-    delay(100);
+    // delay(10);
 
     // convert the distance to a character array for sending
     String water_level_str = String(water_level);
-    static char send_payload[50];
-    water_level_str.toCharArray(send_payload, 50);
-    Serial.println(send_payload);
-
+    static char water_level_char[10];
+    water_level_str.toCharArray(water_level_char, sizeof(water_level_char));
+    
     // set module as a transmitter
     radio.stopListening();
 
     // send the distance reading
-    Serial.print(F("Now sending length "));
-    Serial.println(next_payload_size);
-    radio.write(send_payload, next_payload_size); // why next_payload_size? why not sizeof(send_payload)
+    radio.write(&water_level_char, sizeof(water_level_char)); 
 
     // Now, resume listening so we catch the next packets.
     radio.startListening();
-
-    // Tell the user what we sent back (the random numer + 1)
-    Serial.print("Sent response ");
-    Serial.println(data);
-    Serial.println(now);
 
     // save time stamp and distance reading to SD card
     saveData(now, water_level);
 
     // delay loop for the transmission interval
-    delay(send_interval);
+    //  delay(send_interval);
 
     }
 }
