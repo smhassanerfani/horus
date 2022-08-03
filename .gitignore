@@ -133,3 +133,6 @@ dmypy.json
 
 # camera parameters
 *.yml
+
+# dataset
+machine_learning/dataset
