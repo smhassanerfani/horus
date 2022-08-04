@@ -7,28 +7,11 @@ from utils.loss import FocalLoss
 from torch.utils.data import DataLoader
 from models.pspnet import PSPNet
 import joint_transforms as joint_transforms
-
-
-class AdjustLearningRate:
-    num_of_iterations = 0
-
-    def __init__(self, optimizer, base_lr, max_iter, power):
-        self.optimizer = optimizer
-        self.base_lr = base_lr
-        self.max_iter = max_iter
-        self.power = power
-
-    def __call__(self, current_iter):
-        lr = self.base_lr * ((1 - float(current_iter) / self.max_iter) ** self.power)
-        self.optimizer.param_groups[0]['lr'] = lr
-        if len(self.optimizer.param_groups) > 1:
-            self.optimizer.param_groups[1]['lr'] = lr * 10
-
-        return lr
+from utils.plrds import AdjustLearningRate
 
 
 def train_loop(dataloader, model, loss_fn, optimizer, lr_estimator, interpolation):
-    # size = len(dataloader.dataset)
+
     for batch, (images, masks, _, _, _) in enumerate(dataloader, 1):
 
         # GPU deployment
@@ -36,17 +19,18 @@ def train_loop(dataloader, model, loss_fn, optimizer, lr_estimator, interpolatio
         # masks = masks.cuda()
         masks = masks.float().cuda() #BCE
 
-        # Compute prediction and loss
-        _, pred = model(images)
-        # aux = interpolation(aux)
+        # Compute prediction
+        aux, pred = model(images)
+        aux = interpolation(aux)
         pred = interpolation(pred)
 
 
         # BCE
-        # aux = aux.squeeze(1)
+        aux = aux.squeeze(1)
         pred = pred.squeeze(1)
 
-        loss = loss_fn(pred, masks)
+        # Compute Loss Function
+        loss = loss_fn(pred, masks) + 0.4 * loss_fn(aux, masks)
 
         # Backpropagation
         optimizer.zero_grad()
@@ -76,11 +60,9 @@ def val_loop(dataloader, model, loss_fn, interpolation):
 
             # Compute prediction and loss
             _, pred = model(images)
-            # aux = interpolation(aux)
             pred = interpolation(pred)
 
             # BCE
-            # aux = aux.squeeze(1)
             pred = pred.squeeze(1)
 
             val_loss += loss_fn(pred, masks)
@@ -143,8 +125,6 @@ def main(args):
                                 num_workers=args.num_workers, pin_memory=True, drop_last=False)
 
     # Initializing the loss function and optimizer
-    # loss_fn = torch.nn.CrossEntropyLoss(ignore_index=3)
-    # loss_fn = FocalLoss(class_num=3, gamma=2, ignore_index=4)
     loss_fn = torch.nn.BCEWithLogitsLoss()
 
     optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate,
@@ -168,9 +148,9 @@ def main(args):
 def get_arguments(
         MODEL="PSPNet",
         NUM_CLASSES=1,
-        SNAPSHOT_DIR="models/results/",
+        SNAPSHOT_DIR="results/",
         DATA_DIRECTORY="dataset",
-        INPUT_SIZE=448,
+        INPUT_SIZE=500,
         BATCH_SIZE=2,
         NUM_WORKERS=4,
         LEARNING_RATE=2.5e-4,
@@ -179,7 +159,8 @@ def get_arguments(
         NUM_EPOCHS=30,
         POWER=0.9,
         RESTORE_FROM="models/resnet101-imagenet.pth"
-):
+    ):
+
     parser = argparse.ArgumentParser(description=f"Training {MODEL} on ATLANTIS.")
     parser.add_argument("--model", type=str, default=MODEL,
                         help=f"Model Name: {MODEL}")
