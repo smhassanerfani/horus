@@ -1,7 +1,7 @@
 import os
 import argparse
 import numpy as np
-# from skimage.io import imsave
+from skimage.io import imsave
 from PIL import Image
 from tqdm import tqdm
 import torch
@@ -34,8 +34,7 @@ def main(args):
     test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False,
                                  num_workers=args.num_workers, pin_memory=True, drop_last=False)
 
-    interpolation = torch.nn.Upsample(size=(args.padding_size, args.padding_size), mode="bilinear",
-                                      align_corners=True)
+    interpolation = torch.nn.Upsample(size=args.padding_size, mode="bilinear", align_corners=True)
     with torch.no_grad():
         for image, mask, name, width, height in tqdm(test_dataloader):
 
@@ -53,12 +52,12 @@ def main(args):
             # pred = np.array(np.argmax(pred, axis=2), dtype=np.uint8)
             mask = np.array(mask.squeeze(0), dtype=np.uint8)
 
-            uint8_pred = Image.fromarray(np.uint8(pred))
+            # uint8_pred = Image.fromarray(np.uint8(pred))
             rgb_pred = colorize_mask(pred, args.num_classes)
             rgb_mask = colorize_mask(mask, args.num_classes)
 
-            uint8_pred.save('%s/%s.png' % (args.save_path, name[0][:-4]))
-            # imsave('%s/%s.png' % (args.save_path, name[0][:-4]), pred)
+            # uint8_pred.save('%s/%s.png' % (args.save_path, name[0][:-4]))
+            imsave('%s/%s.png' % (args.save_path, name[0][:-4]), pred)
 
             if args.split != "test":
                 rgb_pred.save('%s/%s_color.png' % (args.save_path, name[0][:-4]))
@@ -71,12 +70,12 @@ def get_arguments(
     model="PSPNet",
     split="val",
     num_classes=1,
-    padding_size=448,
+    padding_size=(1440, 1920),
     batch_size=1,
     num_workers=1,
     data_directory="./dataset",
-    restore_from="./models/results/epoch30.pth",
-    save_path="./models/results/epoch30"
+    restore_from="./results/PSPNet/model_weights/epoch22.pth",
+    save_path="./results/PSPNet/val_visualization/"
 ):
     parser = argparse.ArgumentParser(description=f"Testing {model} on ATLANTIS 'test' set.")
     parser.add_argument("--model", type=str, default=model,
