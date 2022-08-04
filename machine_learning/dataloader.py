@@ -31,12 +31,12 @@ class Materials(data.Dataset):
     def get_images_list(self, images_base, masks_base):
         items_list = []
         for root, dirs, files in os.walk(images_base, topdown=True):
-            mask_root = os.path.join(masks_base, os.path.split(root)[1])
+
             for name in files:
                 if name.endswith(".jpg"):
                     mask_name = name.replace(".jpg", ".png")
                     img_file = os.path.join(root, name)
-                    lbl_file = os.path.join(mask_root, mask_name)
+                    lbl_file = os.path.join(masks_base, mask_name)
                     items_list.append({
                         "image": img_file,
                         "label": lbl_file,
@@ -57,11 +57,8 @@ class Materials(data.Dataset):
         image = self.image_transforms(image)
         label = self.label_transforms(label)
 
-        label_copy = label - 1
-        label_copy[(label_copy==-1) | (label_copy==1) | (label_copy==2)] = 0
-        label_copy[label_copy==4] = 1
 
-        return image, label_copy, name, width, height
+        return image, label, name, width, height
 
     def __len__(self):
         return len(self.items_list)
