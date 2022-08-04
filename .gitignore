@@ -136,6 +136,7 @@ dmypy.json
 
 # dataset
 machine_learning/dataset
+machine_learning/results
 
 # model weights
 *.pth
