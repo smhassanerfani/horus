@@ -11,10 +11,10 @@ class MaskToTensor(object):
         return torch.from_numpy(np.array(img, dtype=np.int32)).long()
 
 
-class Materials(data.Dataset):
+class Horus(data.Dataset):
 
     def __init__(self, root, split, joint_transform=None):
-        super(Materials, self).__init__()
+        super(Horus, self).__init__()
         self.root = root
         self.split = split
         self.images_base = os.path.join(self.root, "images", self.split)
