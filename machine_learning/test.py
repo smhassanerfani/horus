@@ -30,7 +30,7 @@ def main(args):
     saved_state_dict = torch.load(args.restore_from)
     model.load_state_dict(saved_state_dict)
 
-    test_dataset = Materials(args.data_directory, split="test")
+    test_dataset = Materials(args.data_directory, split=args.split)
     test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False,
                                  num_workers=args.num_workers, pin_memory=True, drop_last=False)
 
@@ -44,19 +44,18 @@ def main(args):
             # Compute prediction and loss
             _, pred = model(image)
 
-            pred = interpolation(pred).squeeze(1).detach().cpu().numpy()[0]
+            pred = interpolation(pred).squeeze(0).detach().cpu().numpy()
 
-            pred[pred>0.5]=1
-            pred[pred<=0.5]=0
+            # BCE Loss Function
+            pred[pred>0.5] = 1
+            pred[pred<=0.5] = 0
 
-            # pred = np.array(np.argmax(pred, axis=2), dtype=np.uint8)
-            mask = np.array(mask.squeeze(0), dtype=np.uint8)
+            # pred = np.array(np.argmax(pred, axis=2), dtype=np.uint8) # IF NOT BCE
+            mask = np.array(mask.squeeze(0), dtype=np.uint8) 
 
-            # uint8_pred = Image.fromarray(np.uint8(pred))
             rgb_pred = colorize_mask(pred, args.num_classes)
             rgb_mask = colorize_mask(mask, args.num_classes)
 
-            # uint8_pred.save('%s/%s.png' % (args.save_path, name[0][:-4]))
             imsave('%s/%s.png' % (args.save_path, name[0][:-4]), pred)
 
             if args.split != "test":
