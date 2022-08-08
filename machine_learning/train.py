@@ -1,156 +1,20 @@
 import argparse
 import os
 import torch
+import numpy as np
 import torch.backends.cudnn as cudnn
-from dataloader import Materials
-from utils.loss import FocalLoss
+from dataloader import Horus
+from utils.loss import DiceLoss
 from torch.utils.data import DataLoader
-from models.pspnet import PSPNet
 import joint_transforms as joint_transforms
 from utils.plrds import AdjustLearningRate
 
-
-def train_loop(dataloader, model, loss_fn, optimizer, lr_estimator, interpolation):
-
-    for batch, (images, masks, _, _, _) in enumerate(dataloader, 1):
-
-        # GPU deployment
-        images = images.cuda()
-        # masks = masks.cuda()
-        masks = masks.float().cuda() #BCE
-
-        # Compute prediction
-        aux, pred = model(images)
-        aux = interpolation(aux)
-        pred = interpolation(pred)
-
-
-        # BCE
-        aux = aux.squeeze(1)
-        pred = pred.squeeze(1)
-
-        # Compute Loss Function
-        loss = loss_fn(pred, masks) + 0.4 * loss_fn(aux, masks)
-
-        # Backpropagation
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        lr_estimator.num_of_iterations += len(images)
-        lr = lr_estimator(lr_estimator.num_of_iterations)
-
-        if batch % 100 == 0:
-            loss, current = loss.item(), lr_estimator.num_of_iterations
-            print(f"loss: {loss:.5f}, lr = {lr:.6f} [{current:6d}/{lr_estimator.max_iter:6d}]")
-
-
-def val_loop(dataloader, model, loss_fn, interpolation):
-    size = len(dataloader.dataset)
-    num_batches = len(dataloader)
-    val_loss, correct = 0, 0
-
-    with torch.no_grad():
-        for images, masks, _, _, _ in dataloader:
-
-            # GPU deployment
-            images = images.cuda()
-            # masks = masks.cuda()
-            masks = masks.float().cuda() #BCE
-
-            # Compute prediction and loss
-            _, pred = model(images)
-            pred = interpolation(pred)
-
-            # BCE
-            pred = pred.squeeze(1)
-
-            val_loss += loss_fn(pred, masks)
-
-            pred[pred > 0.5] = 1
-            pred[pred <= 0.5] = 0
-
-            correct += (pred == masks).type(torch.float).sum().item()
-
-        val_loss /= num_batches
-        correct /= (size * masks.size(1) * masks.size(2))
-        print(f"Validation Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg loss: {val_loss:>8f} \n")
-
-
-def main(args):
-    cudnn.enabled = True
-    cudnn.benchmark = True
-
-    # Loading model
-    if args.model == "PSPNet":
-        model = PSPNet(img_channel=3, num_classes=args.num_classes)
-
-    try:
-        os.makedirs(args.snapshot_dir)
-    except FileExistsError:
-        pass
-
-    saved_state_dict = torch.load(args.restore_from)
-    new_params = model.state_dict().copy()
-
-    for key, value in saved_state_dict.items():
-        if key.split(".")[0] not in ["head", "dsn", "fc"]:
-            new_params[key] = value
-
-    model.load_state_dict(new_params, strict=False)
-
-    model = model.cuda()
-    model.train()
-
-    # Dataloader
-    train_joint_transform_list = [
-        joint_transforms.RandomSizeAndCrop(
-            args.input_size,
-            False,
-            pre_size=None,
-            scale_min=0.5,
-            scale_max=2.0,
-            ignore_index=0),
-        joint_transforms.Resize(args.input_size),
-        joint_transforms.RandomHorizontallyFlip()]
-
-    train_joint_transform = joint_transforms.Compose(train_joint_transform_list)
-    train_dataset = Materials(args.data_directory, split="train", joint_transform=train_joint_transform)
-    val_dataset = Materials(args.data_directory, split="val", joint_transform=train_joint_transform)
-
-    train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True,
-                                  num_workers=args.num_workers, pin_memory=True, drop_last=False)
-
-    val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=True,
-                                num_workers=args.num_workers, pin_memory=True, drop_last=False)
-
-    # Initializing the loss function and optimizer
-    loss_fn = torch.nn.BCEWithLogitsLoss()
-
-    optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate,
-                                momentum=args.momentum, weight_decay=args.weight_decay)
-
-    interpolation = torch.nn.Upsample(size=(args.input_size, args.input_size), mode="bilinear",
-                                      align_corners=True)
-
-    max_iter = args.num_epochs * len(train_dataloader.dataset)
-    lr_poly = AdjustLearningRate(optimizer, args.learning_rate, max_iter, args.power)
-
-    for epoch in range(args.num_epochs):
-        print(f"Epoch {epoch + 1}\n-------------------------------")
-        train_loop(train_dataloader, model, loss_fn, optimizer, lr_poly, interpolation)
-        val_loop(val_dataloader, model, loss_fn, interpolation)
-        torch.save(model.state_dict(),
-                   os.path.join(args.snapshot_dir, "epoch" + str(epoch + 1) + ".pth"))
-    print("Done!")
-
-
 def get_arguments(
-        MODEL="PSPNet",
-        NUM_CLASSES=1,
-        SNAPSHOT_DIR="results/",
-        DATA_DIRECTORY="dataset",
-        INPUT_SIZE=500,
+        MODEL="TransUNet",
+        NUM_CLASSES=2,
+        SNAPSHOT_DIR="./results/TransUNet/model_weights",
+        DATA_DIRECTORY="./dataset",
+        INPUT_SIZE=448,
         BATCH_SIZE=2,
         NUM_WORKERS=4,
         LEARNING_RATE=2.5e-4,
@@ -158,7 +22,7 @@ def get_arguments(
         WEIGHT_DECAY=0.0001,
         NUM_EPOCHS=30,
         POWER=0.9,
-        RESTORE_FROM="models/resnet101-imagenet.pth"
+        RESTORE_FROM="./models/R50+ViT-B_16.npz"
     ):
 
     parser = argparse.ArgumentParser(description=f"Training {MODEL} on ATLANTIS.")
@@ -190,6 +54,128 @@ def get_arguments(
                         help="Decay parameter to compute the learning rate.")
 
     return parser.parse_args()
+
+
+def train_loop(dataloader, model, loss_fn, optimizer, lr_estimator, interpolation):
+
+    model.train()
+
+    for batch, (images, masks, _, _, _) in enumerate(dataloader, 1):
+
+        # GPU deployment
+        images = images.cuda()
+        masks = masks.cuda()
+        
+        # Compute prediction
+        pred = model(images)
+
+        # Compute Loss Function
+        loss_ce = loss_fn[0](pred, masks)
+        loss_dice = loss_fn[1](pred, masks, softmax=True)
+        loss = 0.5 * loss_ce + 0.5 * loss_dice
+
+        # Backpropagation
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        lr_estimator.num_of_iterations += len(images)
+        lr = lr_estimator(lr_estimator.num_of_iterations)
+
+        if batch % 100 == 0:
+            loss, current = loss.item(), lr_estimator.num_of_iterations
+            print(f"loss: {loss:.5f}, lr = {lr:.6f} [{current:6d}/{lr_estimator.max_iter:6d}]")
+
+
+def val_loop(dataloader, model, loss_fn, interpolation):
+    size = len(dataloader.dataset)
+    num_batches = len(dataloader)
+    val_loss, correct = 0, 0
+
+    with torch.no_grad():
+        for images, masks, _, _, _ in dataloader:
+
+            # GPU deployment
+            images = images.cuda()
+            masks = masks.cuda()
+
+            # Compute prediction and loss
+            pred = model(images)
+
+            val_loss += 0.5 * loss_fn[0](pred, masks) + 0.5 * loss_fn[1](pred, masks, softmax=True)
+            
+            correct += (pred.argmax(1) == masks).type(torch.float).sum().item()
+
+        val_loss /= num_batches
+        correct /= (size * masks.size(1) * masks.size(2))
+        print(f"Validation Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg loss: {val_loss:>8f} \n")
+
+
+def main(args):
+    cudnn.enabled = True
+    cudnn.benchmark = True
+
+    # Loading model
+    if args.model == "TransUNet":
+        from models.vit_seg_modeling import VisionTransformer as ViT_seg
+        from models.vit_seg_modeling import CONFIGS as CONFIGS_ViT_seg
+        config_vit = CONFIGS_ViT_seg["R50-ViT-B_16"]
+        config_vit.n_classes = args.num_classes
+        model = ViT_seg(config_vit, img_size=args.input_size, num_classes=config_vit.n_classes)
+        model.load_from(weights=np.load(args.restore_from))
+
+    
+    try:
+        os.makedirs(args.snapshot_dir)
+    except FileExistsError:
+        pass
+
+
+    model = model.cuda()
+
+    # Dataloader
+    train_joint_transform_list = [
+        joint_transforms.RandomSizeAndCrop(
+            args.input_size,
+            False,
+            pre_size=None,
+            scale_min=0.5,
+            scale_max=2.0,
+            ignore_index=0),
+        joint_transforms.Resize(args.input_size),
+        joint_transforms.RandomHorizontallyFlip()]
+
+    train_joint_transform = joint_transforms.Compose(train_joint_transform_list)
+    train_dataset = Horus(args.data_directory, split="train", joint_transform=train_joint_transform)
+    val_dataset = Horus(args.data_directory, split="val", joint_transform=train_joint_transform)
+
+    train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True,
+                                  num_workers=args.num_workers, pin_memory=True, drop_last=False)
+
+    val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=True,
+                                num_workers=args.num_workers, pin_memory=True, drop_last=False)
+
+    # Initializing the loss function and optimizer
+    ce_loss = torch.nn.CrossEntropyLoss()
+    dice_loss = DiceLoss(args.num_classes)
+    loss_fn = (ce_loss, dice_loss)
+
+    optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate,
+                                momentum=args.momentum, weight_decay=args.weight_decay)
+
+    interpolation = torch.nn.Upsample(size=(args.input_size, args.input_size), mode="bilinear",
+                                      align_corners=True)
+
+    max_iter = args.num_epochs * len(train_dataloader.dataset)
+    lr_poly = AdjustLearningRate(optimizer, args.learning_rate, max_iter, args.power)
+
+    for epoch in range(args.num_epochs):
+        print(f"Epoch {epoch + 1}\n-------------------------------")
+        train_loop(train_dataloader, model, loss_fn, optimizer, lr_poly, interpolation)
+        val_loop(val_dataloader, model, loss_fn, interpolation)
+        torch.save(model.state_dict(),
+                   os.path.join(args.snapshot_dir, "epoch" + str(epoch + 1) + ".pth"))
+    print("Done!")
 
 
 if __name__ == "__main__":
