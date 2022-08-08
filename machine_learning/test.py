@@ -7,75 +7,23 @@ from tqdm import tqdm
 import torch
 import torch.backends.cudnn as cudnn
 from utils.palette import colorize_mask
-from models.pspnet import PSPNet
-from dataloader import Materials
+from dataloader import Horus
 from torch.utils.data import DataLoader
-
-
-def main(args):
-    cudnn.enabled = True
-    cudnn.benchmark = True
-
-    if args.model == "PSPNet":
-        model = PSPNet(img_channel=3, num_classes=args.num_classes)
-
-    model.eval()
-    model.cuda()
-
-    try:
-        os.makedirs(args.save_path)
-    except FileExistsError:
-        pass
-
-    saved_state_dict = torch.load(args.restore_from)
-    model.load_state_dict(saved_state_dict)
-
-    test_dataset = Materials(args.data_directory, split=args.split)
-    test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False,
-                                 num_workers=args.num_workers, pin_memory=True, drop_last=False)
-
-    interpolation = torch.nn.Upsample(size=args.padding_size, mode="bilinear", align_corners=True)
-    with torch.no_grad():
-        for image, mask, name, width, height in tqdm(test_dataloader):
-
-            # GPU deployment
-            image = image.cuda()
-
-            # Compute prediction and loss
-            _, pred = model(image)
-
-            pred = interpolation(pred).squeeze(0).detach().cpu().numpy()
-
-            # BCE Loss Function
-            pred[pred>0.5] = 1
-            pred[pred<=0.5] = 0
-
-            # pred = np.array(np.argmax(pred, axis=2), dtype=np.uint8) # IF NOT BCE
-            mask = np.array(mask.squeeze(0), dtype=np.uint8) 
-
-            rgb_pred = colorize_mask(pred, args.num_classes)
-            rgb_mask = colorize_mask(mask, args.num_classes)
-
-            imsave('%s/%s.png' % (args.save_path, name[0][:-4]), pred)
-
-            if args.split != "test":
-                rgb_pred.save('%s/%s_color.png' % (args.save_path, name[0][:-4]))
-                rgb_mask.save('%s/%s_gt.png' % (args.save_path, name[0][:-4]))
-
-        print("finish")
+from joint_transforms import Resize
 
 
 def get_arguments(
-    model="PSPNet",
-    split="val",
-    num_classes=1,
-    padding_size=(1440, 1920),
-    batch_size=1,
-    num_workers=1,
-    data_directory="./dataset",
-    restore_from="./results/PSPNet/model_weights/epoch22.pth",
-    save_path="./results/PSPNet/val_visualization/"
-):
+        model="TransUNet",
+        split="val",
+        num_classes=2,
+        padding_size=448, #(1440, 1920),
+        batch_size=1,
+        num_workers=1,
+        data_directory="./dataset",
+        restore_from="./results/TransUNet/model_weights/epoch30.pth",
+        save_path="./results/TransUNet/val_visualization/"
+    ):
+    
     parser = argparse.ArgumentParser(description=f"Testing {model} on ATLANTIS 'test' set.")
     parser.add_argument("--model", type=str, default=model,
                         help=f"Model name: {model}.")
@@ -96,6 +44,63 @@ def get_arguments(
     parser.add_argument("--save-path", type=str, default=save_path,
                         help="Path to save results.")
     return parser.parse_args()
+
+
+def main(args):
+    cudnn.enabled = True
+    cudnn.benchmark = True
+
+    if args.model == "PSPNet":
+        from models.pspnet import PSPNet
+        model = PSPNet(img_channel=3, num_classes=args.num_classes)
+
+    if args.model == "TransUNet":
+        from models.vit_seg_modeling import VisionTransformer as ViT_seg
+        from models.vit_seg_modeling import CONFIGS as CONFIGS_ViT_seg
+        config_vit = CONFIGS_ViT_seg["R50-ViT-B_16"]
+        config_vit.n_classes = args.num_classes
+        model = ViT_seg(config_vit, img_size=args.padding_size, num_classes=config_vit.n_classes)
+
+    saved_state_dict = torch.load(args.restore_from)
+    model.load_state_dict(saved_state_dict)
+
+    model.eval()
+    model.cuda()
+
+    try:
+        os.makedirs(args.save_path)
+    except FileExistsError:
+        pass
+
+    test_dataset = Horus(args.data_directory, split=args.split, joint_transform=Resize(args.padding_size))
+    test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False,
+                                 num_workers=args.num_workers, pin_memory=True, drop_last=False)
+
+    interpolation = torch.nn.Upsample(size=(1440, 1920), mode="bilinear", align_corners=True)
+    with torch.no_grad():
+        for image, mask, name, width, height in tqdm(test_dataloader):
+
+            # GPU deployment
+            image = image.cuda()
+
+            # Compute prediction and loss
+            pred = model(image)
+
+            pred = interpolation(pred).squeeze(0).detach().cpu().numpy().transpose(1, 2, 0)
+
+            pred = np.array(np.argmax(pred, axis=2), dtype=np.uint8)
+            mask = np.array(mask.squeeze(0), dtype=np.uint8)
+
+            rgb_pred = colorize_mask(pred, args.num_classes)
+            rgb_mask = colorize_mask(mask, args.num_classes)
+
+            imsave('%s/%s.png' % (args.save_path, name[0][:-4]), pred)
+
+            if args.split != "test":
+                rgb_pred.save('%s/%s_color.png' % (args.save_path, name[0][:-4]))
+                rgb_mask.save('%s/%s_gt.png' % (args.save_path, name[0][:-4]))
+
+        print("finish")
 
 
 if __name__ == "__main__":
