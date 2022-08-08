@@ -140,3 +140,4 @@ machine_learning/results
 
 # model weights
 *.pth
+*.npz
