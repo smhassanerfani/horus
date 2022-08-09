@@ -1,29 +1,20 @@
 [
     {
-        "name": "Masonry",
+        "name": "Background",
         "id": 0,
         "color": [
-            255,
-            153,
-            102
+            0,
+            0,
+            0
         ]
     },
     {
-        "name": "Concrete",
+        "name": "River",
         "id": 1,
         "color": [
-            122,
-            209,
-            236
-        ]
-    },
-    {
-        "name": "Asphalt",
-        "id": 2,
-        "color": [
-            128,
-            128,
-            128
+            160,
+            96,
+            224
         ]
     }
 ]
