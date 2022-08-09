@@ -25,7 +25,7 @@ def get_arguments(
         save_path="./results/TransUNet/val_visualization_v2/"
     ):
     
-    parser = argparse.ArgumentParser(description=f"Testing {model} on ATLANTIS 'test' set.")
+    parser = argparse.ArgumentParser(description=f"Testing {model} on Horus 'test' set.")
     parser.add_argument("--model", type=str, default=model,
                         help=f"Model name: {model}.")
     parser.add_argument("--split", type=str, default=split,
@@ -53,9 +53,6 @@ def main(args):
     cudnn.enabled = True
     cudnn.benchmark = True
 
-    if args.model == "PSPNet":
-        from models.pspnet import PSPNet
-        model = PSPNet(img_channel=3, num_classes=args.num_classes)
 
     if args.model == "TransUNet":
         from models.vit_seg_modeling import VisionTransformer as ViT_seg
