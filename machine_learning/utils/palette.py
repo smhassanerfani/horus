@@ -15,10 +15,13 @@ zero_pad = 256 * 3 - len(palette)
 for i in range(zero_pad):
     palette.append(0)
 
+def colorize_mask(mask, padding_size=False):
 
-def colorize_mask(mask, num_classes):
-    mask_copy = np.zeros_like(mask)
-    mask_copy = mask
-    new_mask = Image.fromarray(mask_copy.astype(np.uint8)).convert('P')
+    new_mask = Image.fromarray(mask.astype(np.uint8)).convert('P')
+
+    if padding_size:
+        h, w =  padding_size
+        new_mask = new_mask.resize((w, h), Image.NEAREST)
+
     new_mask.putpalette(palette)
     return new_mask
