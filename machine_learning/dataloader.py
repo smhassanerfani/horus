@@ -13,7 +13,7 @@ class MaskToTensor(object):
 
 class Horus(data.Dataset):
 
-    def __init__(self, root, split, joint_transform=None):
+    def __init__(self, root, split, joint_transform=None, transform=True):
         super(Horus, self).__init__()
         self.root = root
         self.split = split
@@ -22,6 +22,7 @@ class Horus(data.Dataset):
         self.items_list = self.get_images_list(self.images_base, self.masks_base)
 
         self.joint_transform = joint_transform
+        self.transform = transform
         mean_std = ([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         image_transforms_list = [ToTensor(), Normalize(*mean_std)]
         self.image_transforms = Compose(image_transforms_list)
@@ -54,9 +55,13 @@ class Horus(data.Dataset):
 
         if self.joint_transform:
             image, label = self.joint_transform(image, label)
-        image = self.image_transforms(image)
-        label = self.label_transforms(label)
 
+        if self.transform:
+            image = self.image_transforms(image)
+            label = self.label_transforms(label)
+        else:
+            image = np.asarray(image, dtype=np.uint8)
+            label = np.asarray(label, dtype=np.uint8)
 
         return image, label, name, width, height
 
