@@ -16,12 +16,13 @@ def get_arguments(
         model="TransUNet",
         split="val",
         num_classes=2,
-        padding_size=448, #(1440, 1920),
+        input_size =448,
+        padding_size=(1440, 1920),
         batch_size=1,
         num_workers=1,
         data_directory="./dataset",
         restore_from="./results/TransUNet/model_weights/epoch30.pth",
-        save_path="./results/TransUNet/val_visualization/"
+        save_path="./results/TransUNet/val_visualization_v2/"
     ):
     
     parser = argparse.ArgumentParser(description=f"Testing {model} on ATLANTIS 'test' set.")
@@ -31,6 +32,8 @@ def get_arguments(
                         help="ATLANTIS 'test' set.")
     parser.add_argument("--num-classes", type=int, default=num_classes,
                         help="Number of classes to predict, excluding background.")
+    parser.add_argument("--input-size", type=int, default=input_size,
+                        help="Integer number determining the height and width of model input.")
     parser.add_argument("--padding-size", type=int, default=padding_size,
                         help="Integer number determining the height and width of model output.")
     parser.add_argument("--batch-size", type=int, default=batch_size,
@@ -59,7 +62,7 @@ def main(args):
         from models.vit_seg_modeling import CONFIGS as CONFIGS_ViT_seg
         config_vit = CONFIGS_ViT_seg["R50-ViT-B_16"]
         config_vit.n_classes = args.num_classes
-        model = ViT_seg(config_vit, img_size=args.padding_size, num_classes=config_vit.n_classes)
+        model = ViT_seg(config_vit, img_size=args.input_size, num_classes=config_vit.n_classes)
 
     saved_state_dict = torch.load(args.restore_from)
     model.load_state_dict(saved_state_dict)
@@ -72,11 +75,11 @@ def main(args):
     except FileExistsError:
         pass
 
-    test_dataset = Horus(args.data_directory, split=args.split, joint_transform=Resize(args.padding_size))
+    test_dataset = Horus(args.data_directory, split=args.split, joint_transform=Resize(args.input_size))
     test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False,
                                  num_workers=args.num_workers, pin_memory=True, drop_last=False)
 
-    interpolation = torch.nn.Upsample(size=(1440, 1920), mode="bilinear", align_corners=True)
+    interpolation = torch.nn.Upsample(size=args.padding_size, mode="bilinear", align_corners=True)
     with torch.no_grad():
         for image, mask, name, width, height in tqdm(test_dataloader):
 
@@ -88,11 +91,11 @@ def main(args):
 
             pred = interpolation(pred).squeeze(0).detach().cpu().numpy().transpose(1, 2, 0)
 
-            pred = np.array(np.argmax(pred, axis=2), dtype=np.uint8)
-            mask = np.array(mask.squeeze(0), dtype=np.uint8)
+            pred = np.argmax(pred, axis=2)
+            mask = mask.squeeze(0).numpy()
 
-            rgb_pred = colorize_mask(pred, args.num_classes)
-            rgb_mask = colorize_mask(mask, args.num_classes)
+            rgb_pred = colorize_mask(pred)
+            rgb_mask = colorize_mask(mask, padding_size=args.padding_size)
 
             imsave('%s/%s.png' % (args.save_path, name[0][:-4]), pred)
 
