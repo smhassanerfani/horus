@@ -44,7 +44,7 @@ def main(args):
             # Compute prediction and loss
             _, pred = model(image)
 
-            pred = interpolation(pred).squeeze(0).detach().cpu().numpy()
+            pred = interpolation(pred).squeeze().detach().cpu().numpy()
 
             # BCE Loss Function
             pred[pred>0.5] = 1
@@ -73,14 +73,14 @@ def get_arguments(
     batch_size=1,
     num_workers=1,
     data_directory="./dataset",
-    restore_from="./results/PSPNet/model_weights/epoch22.pth",
+    restore_from="./results/PSPNet/model_weights/epoch17.pth",
     save_path="./results/PSPNet/val_visualization/"
 ):
-    parser = argparse.ArgumentParser(description=f"Testing {model} on ATLANTIS 'test' set.")
+    parser = argparse.ArgumentParser(description=f"Testing {model} on Horus 'test' set.")
     parser.add_argument("--model", type=str, default=model,
                         help=f"Model name: {model}.")
     parser.add_argument("--split", type=str, default=split,
-                        help="ATLANTIS 'test' set.")
+                        help="Horus 'test' set.")
     parser.add_argument("--num-classes", type=int, default=num_classes,
                         help="Number of classes to predict, excluding background.")
     parser.add_argument("--padding-size", type=int, default=padding_size,
