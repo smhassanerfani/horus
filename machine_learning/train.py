@@ -12,11 +12,11 @@ from utils.plrds import AdjustLearningRate
 
 def train_loop(dataloader, model, loss_fn, optimizer, lr_estimator, interpolation):
 
+    running_loss = 0.0
     for batch, (images, masks, _, _, _) in enumerate(dataloader, 1):
 
         # GPU deployment
         images = images.cuda()
-        # masks = masks.cuda()
         masks = masks.float().cuda() #BCE
 
         # Compute prediction
@@ -40,41 +40,42 @@ def train_loop(dataloader, model, loss_fn, optimizer, lr_estimator, interpolatio
         lr_estimator.num_of_iterations += len(images)
         lr = lr_estimator(lr_estimator.num_of_iterations)
 
+        # Statistics
+        running_loss += loss.item() * images.size(0)
+
         if batch % 100 == 0:
             loss, current = loss.item(), lr_estimator.num_of_iterations
             print(f"loss: {loss:.5f}, lr = {lr:.6f} [{current:6d}/{lr_estimator.max_iter:6d}]")
 
+    epoch_loss = running_loss / len(dataloader.dataset)
+    print(f"Training loss: {epoch_loss:>8f}")
 
 def val_loop(dataloader, model, loss_fn, interpolation):
     size = len(dataloader.dataset)
     num_batches = len(dataloader)
-    val_loss, correct = 0, 0
+    running_loss, correct = 0.0, 0.0
 
     with torch.no_grad():
         for images, masks, _, _, _ in dataloader:
 
             # GPU deployment
             images = images.cuda()
-            # masks = masks.cuda()
             masks = masks.float().cuda() #BCE
 
             # Compute prediction and loss
-            _, pred = model(images)
+            aux, pred = model(images)
             pred = interpolation(pred)
+            aux = interpolation(aux)
 
             # BCE
             pred = pred.squeeze(1)
+            aux = aux.squeeze(1)
 
-            val_loss += loss_fn(pred, masks)
+            loss = loss_fn(pred, masks) + 0.4 * loss_fn(aux, masks)
+            running_loss += loss.item() * images.size(0)
 
-            pred[pred > 0.5] = 1
-            pred[pred <= 0.5] = 0
-
-            correct += (pred == masks).type(torch.float).sum().item()
-
-        val_loss /= num_batches
-        correct /= (size * masks.size(1) * masks.size(2))
-        print(f"Validation Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg loss: {val_loss:>8f} \n")
+        val_loss = running_loss / len(dataloader.dataset)
+        print(f"Validation loss: {val_loss:>8f} \n")
 
 
 def main(args):
@@ -148,7 +149,7 @@ def main(args):
 def get_arguments(
         MODEL="PSPNet",
         NUM_CLASSES=1,
-        SNAPSHOT_DIR="results/",
+        SNAPSHOT_DIR="results/PSPNet/model_weights_test",
         DATA_DIRECTORY="dataset",
         INPUT_SIZE=500,
         BATCH_SIZE=2,
