@@ -13,7 +13,7 @@ class MaskToTensor(object):
 
 class Horus(data.Dataset):
 
-    def __init__(self, root, split, joint_transform=None, transform=True):
+    def __init__(self, root, split, joint_transform=None, transform=True, segformer=None):
         super(Horus, self).__init__()
         self.root = root
         self.split = split
@@ -27,6 +27,8 @@ class Horus(data.Dataset):
         image_transforms_list = [ToTensor(), Normalize(*mean_std)]
         self.image_transforms = Compose(image_transforms_list)
         self.label_transforms = MaskToTensor()
+
+        self.segformer = segformer
 
 
     def get_images_list(self, images_base, masks_base):
@@ -62,6 +64,14 @@ class Horus(data.Dataset):
         else:
             image = np.asarray(image, dtype=np.uint8)
             label = np.asarray(label, dtype=np.uint8)
+
+        if self.segformer:
+            encoded_inputs = self.feature_extractor(image, label, return_tensors="pt")
+
+            for k, v in encoded_inputs.items():
+                encoded_inputs[k].squeeze_()  # remove batch dimension
+
+            return encoded_inputs, name, width, height
 
         return image, label, name, width, height
 
