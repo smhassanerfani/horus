@@ -1,18 +1,16 @@
 import argparse
 import os
 import torch
-import numpy as np
 import torch.backends.cudnn as cudnn
 from dataloader import Horus
-from utils.loss import DiceLoss
 from torch.utils.data import DataLoader
 import joint_transforms as joint_transforms
 from utils.plrds import AdjustLearningRate
 
 def get_arguments(
-        MODEL="TransUNet",
+        MODEL="SegFormer",
         NUM_CLASSES=2,
-        SNAPSHOT_DIR="./results/TransUNet/model_weights",
+        SNAPSHOT_DIR="./results/SegFormer/model_weights",
         DATA_DIRECTORY="./dataset",
         INPUT_SIZE=448,
         BATCH_SIZE=2,
@@ -22,7 +20,7 @@ def get_arguments(
         WEIGHT_DECAY=0.0001,
         NUM_EPOCHS=30,
         POWER=0.9,
-        RESTORE_FROM="./models/R50+ViT-B_16.npz"
+        RESTORE_FROM="nvidia/segformer-b0-finetuned-ade-512-512"
     ):
 
     parser = argparse.ArgumentParser(description=f"Training {MODEL} on ATLANTIS.")
@@ -59,56 +57,54 @@ def get_arguments(
 def train_loop(dataloader, model, loss_fn, optimizer, lr_estimator, interpolation):
 
     model.train()
-
-    for batch, (images, masks, _, _, _) in enumerate(dataloader, 1):
+    running_loss = 0.0
+    for batch, (encoded_inputs, _, _, _) in enumerate(dataloader, 1):
 
         # GPU deployment
-        images = images.cuda()
-        masks = masks.cuda()
+        images = encoded_inputs["pixel_values"].cuda()
+        masks = encoded_inputs["labels"].cuda()
         
         # Compute prediction
-        pred = model(images)
-
-        # Compute Loss Function
-        loss_ce = loss_fn[0](pred, masks)
-        loss_dice = loss_fn[1](pred, masks, softmax=True)
-        loss = 0.5 * loss_ce + 0.5 * loss_dice
+        outputs = model(pixel_values=images, labels=masks)
+        loss, logits = outputs.loss, outputs.logits
 
         # Backpropagation
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
+        # Adjusting learning rate decay
         lr_estimator.num_of_iterations += len(images)
         lr = lr_estimator(lr_estimator.num_of_iterations)
+
+        # Statistics
+        running_loss += loss.item() * images.size(0)
 
         if batch % 100 == 0:
             loss, current = loss.item(), lr_estimator.num_of_iterations
             print(f"loss: {loss:.5f}, lr = {lr:.6f} [{current:6d}/{lr_estimator.max_iter:6d}]")
 
+    epoch_loss = running_loss / len(dataloader.dataset)
+    print(f"Training loss: {epoch_loss:>8f}")
 
 def val_loop(dataloader, model, loss_fn, interpolation):
-    size = len(dataloader.dataset)
-    num_batches = len(dataloader)
-    val_loss, correct = 0, 0
 
+    running_loss = 0.0
     with torch.no_grad():
-        for images, masks, _, _, _ in dataloader:
+        for encoded_inputs, _, _, _ in dataloader:
 
             # GPU deployment
-            images = images.cuda()
-            masks = masks.cuda()
+            images = encoded_inputs["pixel_values"].cuda()
+            masks = encoded_inputs["labels"].cuda()
 
             # Compute prediction and loss
-            pred = model(images)
+            outputs = model(pixel_values=images, labels=masks)
+            loss, logits = outputs.loss, outputs.logits
 
-            val_loss += 0.5 * loss_fn[0](pred, masks) + 0.5 * loss_fn[1](pred, masks, softmax=True)
-            
-            correct += (pred.argmax(1) == masks).type(torch.float).sum().item()
+            running_loss += loss.item() * images.size(0)
 
-        val_loss /= num_batches
-        correct /= (size * masks.size(1) * masks.size(2))
-        print(f"Validation Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg loss: {val_loss:>8f} \n")
+        val_loss = running_loss / len(dataloader.dataset)
+        print(f"Validation loss: {val_loss:>8f} \n")
 
 
 def main(args):
@@ -116,15 +112,12 @@ def main(args):
     cudnn.benchmark = True
 
     # Loading model
-    if args.model == "TransUNet":
-        from models.vit_seg_modeling import VisionTransformer as ViT_seg
-        from models.vit_seg_modeling import CONFIGS as CONFIGS_ViT_seg
-        config_vit = CONFIGS_ViT_seg["R50-ViT-B_16"]
-        config_vit.n_classes = args.num_classes
-        model = ViT_seg(config_vit, img_size=args.input_size, num_classes=config_vit.n_classes)
-        model.load_from(weights=np.load(args.restore_from))
+    if args.model == "SegFormer":
+        from transformers import SegformerFeatureExtractor
+        from transformers import SegformerForSemanticSegmentation
+        feature_extractor = SegformerFeatureExtractor(reduce_labels=True).from_pretrained(args.restore_from)
+        model = SegformerForSemanticSegmentation.from_pretrained(args.restore_from)
 
-    
     try:
         os.makedirs(args.snapshot_dir)
     except FileExistsError:
@@ -146,8 +139,11 @@ def main(args):
         joint_transforms.RandomHorizontallyFlip()]
 
     train_joint_transform = joint_transforms.Compose(train_joint_transform_list)
-    train_dataset = Horus(args.data_directory, split="train", joint_transform=train_joint_transform)
-    val_dataset = Horus(args.data_directory, split="val", joint_transform=train_joint_transform)
+
+    train_dataset = Horus(args.data_directory, split="train",
+                          joint_transform=train_joint_transform, segformer=feature_extractor)
+    val_dataset = Horus(args.data_directory, split="val",
+                        joint_transform=train_joint_transform, segformer=feature_extractor)
 
     train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True,
                                   num_workers=args.num_workers, pin_memory=True, drop_last=False)
@@ -156,10 +152,9 @@ def main(args):
                                 num_workers=args.num_workers, pin_memory=True, drop_last=False)
 
     # Initializing the loss function and optimizer
-    ce_loss = torch.nn.CrossEntropyLoss()
-    dice_loss = DiceLoss(args.num_classes)
-    loss_fn = (ce_loss, dice_loss)
+    loss_fn = None
 
+    # optimizer = torch.optim.AdamW(model.parameters(), lr=0.00006)
     optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate,
                                 momentum=args.momentum, weight_decay=args.weight_decay)
 
