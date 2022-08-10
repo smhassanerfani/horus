@@ -15,7 +15,7 @@ def get_arguments(
         INPUT_SIZE=448,
         BATCH_SIZE=2,
         NUM_WORKERS=4,
-        LEARNING_RATE=2.5e-4,
+        LEARNING_RATE=0.00006,
         MOMENTUM=0.9,
         WEIGHT_DECAY=0.0001,
         NUM_EPOCHS=30,
@@ -78,7 +78,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, lr_estimator, interpolatio
         lr = lr_estimator(lr_estimator.num_of_iterations)
 
         # Statistics
-        running_loss += loss.item() * images.size(0)
+        running_loss += torch.nan_to_num(loss.item(), nan=0.0) * images.size(0)
 
         if batch % 100 == 0:
             loss, current = loss.item(), lr_estimator.num_of_iterations
@@ -101,7 +101,7 @@ def val_loop(dataloader, model, loss_fn, interpolation):
             outputs = model(pixel_values=images, labels=masks)
             loss, logits = outputs.loss, outputs.logits
 
-            running_loss += loss.item() * images.size(0)
+            running_loss += torch.nan_to_num(loss.item(), nan=0.0) * images.size(0)
 
         val_loss = running_loss / len(dataloader.dataset)
         print(f"Validation loss: {val_loss:>8f} \n")
@@ -154,9 +154,9 @@ def main(args):
     # Initializing the loss function and optimizer
     loss_fn = None
 
-    # optimizer = torch.optim.AdamW(model.parameters(), lr=0.00006)
-    optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate,
-                                momentum=args.momentum, weight_decay=args.weight_decay)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate)
+    # optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate,
+    #                             momentum=args.momentum, weight_decay=args.weight_decay)
 
     interpolation = torch.nn.Upsample(size=(args.input_size, args.input_size), mode="bilinear",
                                       align_corners=True)
