@@ -12,8 +12,8 @@ def get_arguments(
         split="val",
         padding_size=False, # (1440, 1920)
         data_directory="./dataset",
-        pred_directory="./results/PSPNet/val_visualization",
-        save_path="./results/PSPNet/val_visualization_v2/"
+        pred_directory="./results/SegFormer/val_visualization",
+        save_path="./results/SegFormer/val_visualization_v2/"
     ):
     
     parser = argparse.ArgumentParser(description=f"Visualization on Horus dataset.")
@@ -37,7 +37,7 @@ def main(args):
     except FileExistsError:
         pass
 
-    dataset = Horus(args.data_directory, split=args.split, joint_transform=None, transform=False)
+    dataset = Horus(args.data_directory, split=args.split, joint_transform=None, transform="ndarray")
 
 
     for image, mask, name, width, height in tqdm(dataset):
