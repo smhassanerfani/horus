@@ -5,7 +5,7 @@ import numpy as np
 import torch.backends.cudnn as cudnn
 from dataloader import Horus
 from torch.utils.data import DataLoader
-import joint_transforms as joint_transforms
+import json
 from utils.plrds import AdjustLearningRate
 
 def get_arguments(
@@ -13,7 +13,6 @@ def get_arguments(
         NUM_CLASSES=2,
         SNAPSHOT_DIR="./results/SegFormer/model_weights",
         DATA_DIRECTORY="./dataset",
-        INPUT_SIZE=448,
         BATCH_SIZE=2,
         NUM_WORKERS=4,
         LEARNING_RATE=0.00006,
@@ -21,8 +20,9 @@ def get_arguments(
         WEIGHT_DECAY=0.0001,
         NUM_EPOCHS=30,
         POWER=0.9,
-        RESTORE_FROM="nvidia/segformer-b0-finetuned-ade-512-512"
-    ):
+        MODEL_CONFIG="nvidia/segformer-b0-finetuned-ade-512-512",
+        LABELS_INFO="utils/labels_info.json"
+        ):
 
     parser = argparse.ArgumentParser(description=f"Training {MODEL} on ATLANTIS.")
     parser.add_argument("--model", type=str, default=MODEL,
@@ -31,10 +31,10 @@ def get_arguments(
                         help="Number of classes to predict, excluding background.")
     parser.add_argument("--snapshot-dir", type=str, default=SNAPSHOT_DIR,
                         help="Where to save snapshots of the model.")
-    parser.add_argument("--restore-from", type=str, default=RESTORE_FROM,
-                        help="Where to restore the model parameters.")
-    parser.add_argument("--input-size", type=int, default=INPUT_SIZE,
-                        help="Comma-separated string with height and width of s")
+    parser.add_argument("--model-config", type=str, default=MODEL_CONFIG,
+                        help="Where to restore the model configs.")
+    parser.add_argument("--labels-info", type=str, default=LABELS_INFO,
+                        help="Path to the directory containing list and id of labels.")
     parser.add_argument("--data-directory", type=str, default=DATA_DIRECTORY,
                         help="Path to the directory containing the source dataset.")
     parser.add_argument("--batch-size", type=int, default=BATCH_SIZE,
@@ -112,12 +112,21 @@ def main(args):
     cudnn.enabled = True
     cudnn.benchmark = True
 
+    with open(args.labels_info, 'r') as jf:
+        horus = json.load(jf)
+
+    id2label = {label["id"]: label["name"] for label in horus}
+    label2id = {label["name"]: label["id"] for label in horus}
+
     # Loading model
     if args.model == "SegFormer":
         from transformers import SegformerFeatureExtractor
         from transformers import SegformerForSemanticSegmentation
-        feature_extractor = SegformerFeatureExtractor(reduce_labels=True).from_pretrained(args.restore_from)
-        model = SegformerForSemanticSegmentation.from_pretrained(args.restore_from)
+        feature_extractor = SegformerFeatureExtractor(reduce_labels=False).from_pretrained(args.model_config)
+        model = SegformerForSemanticSegmentation.from_pretrained(args.model_config,
+                                                                 ignore_mismatched_sizes=True,
+                                                                 num_labels=args.num_classes,
+                                                                 id2label=id2label, label2id=label2id)
 
     try:
         os.makedirs(args.snapshot_dir)
@@ -128,23 +137,11 @@ def main(args):
     model = model.cuda()
 
     # Dataloader
-    train_joint_transform_list = [
-        joint_transforms.RandomSizeAndCrop(
-            args.input_size,
-            False,
-            pre_size=None,
-            scale_min=0.5,
-            scale_max=2.0,
-            ignore_index=0),
-        joint_transforms.Resize(args.input_size),
-        joint_transforms.RandomHorizontallyFlip()]
-
-    train_joint_transform = joint_transforms.Compose(train_joint_transform_list)
-
+    # No train_joint_transform
     train_dataset = Horus(args.data_directory, split="train",
-                          joint_transform=train_joint_transform, segformer=feature_extractor)
+                          transform=None, segformer=feature_extractor)
     val_dataset = Horus(args.data_directory, split="val",
-                        joint_transform=train_joint_transform, segformer=feature_extractor)
+                        transform=None, segformer=feature_extractor)
 
     train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True,
                                   num_workers=args.num_workers, pin_memory=True, drop_last=False)
@@ -159,8 +156,7 @@ def main(args):
     # optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate,
     #                             momentum=args.momentum, weight_decay=args.weight_decay)
 
-    interpolation = torch.nn.Upsample(size=(args.input_size, args.input_size), mode="bilinear",
-                                      align_corners=True)
+    interpolation = None
 
     max_iter = args.num_epochs * len(train_dataloader.dataset)
     lr_poly = AdjustLearningRate(optimizer, args.learning_rate, max_iter, args.power)
