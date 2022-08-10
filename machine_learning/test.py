@@ -9,21 +9,22 @@ import torch.backends.cudnn as cudnn
 from utils.palette import colorize_mask
 from dataloader import Horus
 from torch.utils.data import DataLoader
-from joint_transforms import Resize
+import json
 
 
 def get_arguments(
-        model="TransUNet",
+        model="SegFormer",
         split="val",
         num_classes=2,
-        input_size =448,
         padding_size=(1440, 1920),
         batch_size=1,
         num_workers=1,
         data_directory="./dataset",
-        restore_from="./results/TransUNet/model_weights/epoch30.pth",
-        save_path="./results/TransUNet/val_visualization_v2/"
-    ):
+        model_config="nvidia/segformer-b0-finetuned-ade-512-512",
+        restore_from="./results/SegFormer/model_weights/epoch28.pth",
+        save_path="./results/SegFormer/val_visualization/",
+        LABELS_INFO="utils/labels_info.json"
+        ):
     
     parser = argparse.ArgumentParser(description=f"Testing {model} on Horus 'test' set.")
     parser.add_argument("--model", type=str, default=model,
@@ -32,8 +33,6 @@ def get_arguments(
                         help="ATLANTIS 'test' set.")
     parser.add_argument("--num-classes", type=int, default=num_classes,
                         help="Number of classes to predict, excluding background.")
-    parser.add_argument("--input-size", type=int, default=input_size,
-                        help="Integer number determining the height and width of model input.")
     parser.add_argument("--padding-size", type=int, default=padding_size,
                         help="Integer number determining the height and width of model output.")
     parser.add_argument("--batch-size", type=int, default=batch_size,
@@ -42,10 +41,14 @@ def get_arguments(
                         help="Number of workers for multithread data loading.")
     parser.add_argument("--data-directory", type=str, default=data_directory,
                         help="Path to the directory containing the source dataset.")
+    parser.add_argument("--model-config", type=str, default=model_config,
+                        help="Where model restores configs from.")
     parser.add_argument("--restore-from", type=str, default=restore_from,
                         help="Where model restores parameters from.")
     parser.add_argument("--save-path", type=str, default=save_path,
                         help="Path to save results.")
+    parser.add_argument("--labels-info", type=str, default=LABELS_INFO,
+                        help="Path to the directory containing list and id of labels.")
     return parser.parse_args()
 
 
@@ -54,12 +57,23 @@ def main(args):
     cudnn.benchmark = True
 
 
-    if args.model == "TransUNet":
-        from models.vit_seg_modeling import VisionTransformer as ViT_seg
-        from models.vit_seg_modeling import CONFIGS as CONFIGS_ViT_seg
-        config_vit = CONFIGS_ViT_seg["R50-ViT-B_16"]
-        config_vit.n_classes = args.num_classes
-        model = ViT_seg(config_vit, img_size=args.input_size, num_classes=config_vit.n_classes)
+    if args.model == "SegFormer":
+
+        with open(args.labels_info, 'r') as jf:
+            horus = json.load(jf)
+
+        id2label = {label["id"]: label["name"] for label in horus}
+        label2id = {label["name"]: label["id"] for label in horus}
+
+        # Loading model
+        if args.model == "SegFormer":
+            from transformers import SegformerFeatureExtractor
+            from transformers import SegformerForSemanticSegmentation
+            feature_extractor = SegformerFeatureExtractor(reduce_labels=False).from_pretrained(args.model_config)
+            model = SegformerForSemanticSegmentation.from_pretrained(args.model_config,
+                                                                     ignore_mismatched_sizes=True,
+                                                                     num_labels=args.num_classes,
+                                                                     id2label=id2label, label2id=label2id)
 
     saved_state_dict = torch.load(args.restore_from)
     model.load_state_dict(saved_state_dict)
@@ -72,24 +86,26 @@ def main(args):
     except FileExistsError:
         pass
 
-    test_dataset = Horus(args.data_directory, split=args.split, joint_transform=Resize(args.input_size))
+    test_dataset = Horus(args.data_directory, split=args.split,
+                         transform=None, segformer=feature_extractor)
     test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False,
                                  num_workers=args.num_workers, pin_memory=True, drop_last=False)
 
-    interpolation = torch.nn.Upsample(size=args.padding_size, mode="bilinear", align_corners=True)
+    interpolation = torch.nn.Upsample(size=args.padding_size, mode="bilinear", align_corners=False)
     with torch.no_grad():
-        for image, mask, name, width, height in tqdm(test_dataloader):
+        for encoded_inputs, name, width, height in tqdm(test_dataloader):
 
             # GPU deployment
-            image = image.cuda()
+            image = encoded_inputs["pixel_values"].cuda()
 
             # Compute prediction and loss
-            pred = model(image)
+            outputs = model(pixel_values=image)
 
-            pred = interpolation(pred).squeeze(0).detach().cpu().numpy().transpose(1, 2, 0)
+            pred = interpolation(outputs.logits).squeeze(0).detach().cpu().numpy().transpose(1, 2, 0)
 
             pred = np.argmax(pred, axis=2)
-            mask = mask.squeeze(0).numpy()
+            mask = encoded_inputs["labels"].squeeze(0).numpy()
+            mask = mask / 255
 
             rgb_pred = colorize_mask(pred)
             rgb_mask = colorize_mask(mask, padding_size=args.padding_size)
