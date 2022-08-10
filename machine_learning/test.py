@@ -69,7 +69,7 @@ def main(args):
         if args.model == "SegFormer":
             from transformers import SegformerFeatureExtractor
             from transformers import SegformerForSemanticSegmentation
-            feature_extractor = SegformerFeatureExtractor(reduce_labels=False).from_pretrained(args.model_config)
+            feature_extractor = SegformerFeatureExtractor.from_pretrained(args.model_config, reduce_labels=False)
             model = SegformerForSemanticSegmentation.from_pretrained(args.model_config,
                                                                      ignore_mismatched_sizes=True,
                                                                      num_labels=args.num_classes,
@@ -104,8 +104,10 @@ def main(args):
             pred = interpolation(outputs.logits).squeeze(0).detach().cpu().numpy().transpose(1, 2, 0)
 
             pred = np.argmax(pred, axis=2)
+            pred = pred - 1
+            pred[pred == -1] = 1
+
             mask = encoded_inputs["labels"].squeeze(0).numpy()
-            mask = mask / 255
 
             rgb_pred = colorize_mask(pred)
             rgb_mask = colorize_mask(mask, padding_size=args.padding_size)
