@@ -1,6 +1,7 @@
 import argparse
 import os
 import torch
+import numpy as np
 import torch.backends.cudnn as cudnn
 from dataloader import Horus
 from torch.utils.data import DataLoader
@@ -78,7 +79,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, lr_estimator, interpolatio
         lr = lr_estimator(lr_estimator.num_of_iterations)
 
         # Statistics
-        running_loss += torch.nan_to_num(loss.item(), nan=0.0) * images.size(0)
+        running_loss += np.nan_to_num(loss.item(), nan=0.0) * images.size(0)
 
         if batch % 100 == 0:
             loss, current = loss.item(), lr_estimator.num_of_iterations
@@ -101,7 +102,7 @@ def val_loop(dataloader, model, loss_fn, interpolation):
             outputs = model(pixel_values=images, labels=masks)
             loss, logits = outputs.loss, outputs.logits
 
-            running_loss += torch.nan_to_num(loss.item(), nan=0.0) * images.size(0)
+            running_loss += np.nan_to_num(loss.item(), nan=0.0) * images.size(0)
 
         val_loss = running_loss / len(dataloader.dataset)
         print(f"Validation loss: {val_loss:>8f} \n")
