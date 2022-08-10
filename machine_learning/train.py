@@ -122,7 +122,7 @@ def main(args):
     if args.model == "SegFormer":
         from transformers import SegformerFeatureExtractor
         from transformers import SegformerForSemanticSegmentation
-        feature_extractor = SegformerFeatureExtractor(reduce_labels=False).from_pretrained(args.model_config)
+        feature_extractor = SegformerFeatureExtractor.from_pretrained(args.model_config, reduce_labels=False)
         model = SegformerForSemanticSegmentation.from_pretrained(args.model_config,
                                                                  ignore_mismatched_sizes=True,
                                                                  num_labels=args.num_classes,
