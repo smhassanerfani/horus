@@ -13,7 +13,7 @@ class MaskToTensor(object):
 
 class Horus(data.Dataset):
 
-    def __init__(self, root, split, joint_transform=None, transform=True, segformer=None):
+    def __init__(self, root, split, joint_transform=None, transform="tensor", segformer=None):
         super(Horus, self).__init__()
         self.root = root
         self.split = split
@@ -58,7 +58,7 @@ class Horus(data.Dataset):
         if self.joint_transform:
             image, label = self.joint_transform(image, label)
 
-        if self.transform:
+        if self.transform == "tensor":
             image = self.image_transforms(image)
             label = self.label_transforms(label)
         elif self.transform == "ndarray":
