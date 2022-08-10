@@ -61,7 +61,7 @@ class Horus(data.Dataset):
         if self.transform:
             image = self.image_transforms(image)
             label = self.label_transforms(label)
-        else:
+        elif self.transform == "ndarray":
             image = np.asarray(image, dtype=np.uint8)
             label = np.asarray(label, dtype=np.uint8)
 
