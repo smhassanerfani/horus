@@ -66,7 +66,7 @@ class Horus(data.Dataset):
             label = np.asarray(label, dtype=np.uint8)
 
         if self.segformer:
-            encoded_inputs = self.feature_extractor(image, label, return_tensors="pt")
+            encoded_inputs = self.segformer(image, label, return_tensors="pt")
 
             for k, v in encoded_inputs.items():
                 encoded_inputs[k].squeeze_()  # remove batch dimension
@@ -80,11 +80,15 @@ class Horus(data.Dataset):
 
 
 def main():
-    dataset = Materials("./dataset", "val")
+    from transformers import SegformerFeatureExtractor
+    feature_extractor = SegformerFeatureExtractor(reduce_labels=True)
+
+    dataset = Horus("./dataset", "val", segformer=feature_extractor)
     print(len(dataset))
     dataiter = iter(dataset)
-    image, mask, name, width, height = next(dataiter)
-    print(image.shape, mask.shape, name, (height, width))
+    encoded_inputs, name, width, height = next(dataiter)
+    print(encoded_inputs["pixel_values"].shape)
+    print(encoded_inputs["labels"].shape)
 
 
 if __name__ == "__main__":
