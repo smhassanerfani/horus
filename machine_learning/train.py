@@ -11,7 +11,7 @@ from utils.plrds import AdjustLearningRate
 def get_arguments(
         MODEL="SegFormer",
         NUM_CLASSES=2,
-        SNAPSHOT_DIR="./results/SegFormer/model_weights",
+        SNAPSHOT_DIR="./results/SegFormer/snapshots",
         DATA_DIRECTORY="./dataset",
         BATCH_SIZE=2,
         NUM_WORKERS=4,
