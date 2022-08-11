@@ -2,7 +2,6 @@ import os
 import argparse
 import numpy as np
 from skimage.io import imsave
-from PIL import Image
 from tqdm import tqdm
 import torch
 import torch.backends.cudnn as cudnn
@@ -21,7 +20,7 @@ def get_arguments(
         num_workers=1,
         data_directory="./dataset",
         model_config="nvidia/segformer-b0-finetuned-ade-512-512",
-        restore_from="./results/SegFormer/model_weights/epoch28.pth",
+        restore_from="./results/SegFormer/model_weights/epoch29.pth",
         save_path="./results/SegFormer/val_visualization/",
         LABELS_INFO="utils/labels_info.json"
         ):
@@ -104,9 +103,6 @@ def main(args):
             pred = interpolation(outputs.logits).squeeze(0).detach().cpu().numpy().transpose(1, 2, 0)
 
             pred = np.argmax(pred, axis=2)
-            pred = pred - 1
-            pred[pred == -1] = 1
-
             mask = encoded_inputs["labels"].squeeze(0).numpy()
 
             rgb_pred = colorize_mask(pred)
