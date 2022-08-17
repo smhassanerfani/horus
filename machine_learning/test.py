@@ -49,6 +49,7 @@ def main(args):
             # BCE Loss Function
             pred[pred>0.5] = 1
             pred[pred<=0.5] = 0
+            pred = pred.astype(np.uint8)
 
             # pred = np.array(np.argmax(pred, axis=2), dtype=np.uint8) # IF NOT BCE
             mask = np.array(mask.squeeze(0), dtype=np.uint8) 
@@ -56,7 +57,7 @@ def main(args):
             rgb_pred = colorize_mask(pred, args.num_classes)
             rgb_mask = colorize_mask(mask, args.num_classes)
 
-            imsave('%s/%s.png' % (args.save_path, name[0][:-4]), pred)
+            imsave('%s/%s.png' % (args.save_path, name[0][:-4]), pred, check_contrast=False)
 
             if args.split != "test":
                 rgb_pred.save('%s/%s_color.png' % (args.save_path, name[0][:-4]))
@@ -67,14 +68,14 @@ def main(args):
 
 def get_arguments(
     model="PSPNet",
-    split="val",
+    split="test",
     num_classes=1,
     padding_size=(1440, 1920),
     batch_size=1,
     num_workers=1,
     data_directory="./dataset",
-    restore_from="./results/PSPNet/model_weights/epoch29.pth",
-    save_path="./results/PSPNet/val_visualization/"
+    restore_from="./results/PSPNet/snapshots/epoch29.pth",
+    save_path="./results/PSPNet/test_visualization/"
 ):
     parser = argparse.ArgumentParser(description=f"Testing {model} on Horus 'test' set.")
     parser.add_argument("--model", type=str, default=model,
