@@ -8,7 +8,7 @@ import torch
 import torch.backends.cudnn as cudnn
 from utils.palette import colorize_mask
 from models.pspnet import PSPNet
-from dataloader import Materials
+from dataloader import Horus
 from torch.utils.data import DataLoader
 
 
@@ -30,7 +30,7 @@ def main(args):
     saved_state_dict = torch.load(args.restore_from)
     model.load_state_dict(saved_state_dict)
 
-    test_dataset = Materials(args.data_directory, split=args.split)
+    test_dataset = Horus(args.data_directory, split=args.split)
     test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False,
                                  num_workers=args.num_workers, pin_memory=True, drop_last=False)
 
@@ -73,7 +73,7 @@ def get_arguments(
     batch_size=1,
     num_workers=1,
     data_directory="./dataset",
-    restore_from="./results/PSPNet/model_weights/epoch17.pth",
+    restore_from="./results/PSPNet/model_weights/epoch29.pth",
     save_path="./results/PSPNet/val_visualization/"
 ):
     parser = argparse.ArgumentParser(description=f"Testing {model} on Horus 'test' set.")
