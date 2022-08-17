@@ -13,15 +13,16 @@ import json
 
 def get_arguments(
         model="SegFormer",
-        split="val",
+        split="test",
         num_classes=2,
         padding_size=(1440, 1920),
         batch_size=1,
         num_workers=1,
         data_directory="./dataset",
-        model_config="nvidia/segformer-b0-finetuned-ade-512-512",
-        restore_from="./results/SegFormer/model_weights/epoch29.pth",
-        save_path="./results/SegFormer/val_visualization/",
+        model_config="nvidia/segformer-b5-finetuned-cityscapes-1024-1024",
+        # model_config="nvidia/segformer-b0-finetuned-ade-512-512",
+        restore_from="./results/SegFormer-B5/snapshots/epoch25.pth",
+        save_path="./results/SegFormer-B5/test_visualization/",
         LABELS_INFO="utils/labels_info.json"
         ):
     
@@ -102,13 +103,13 @@ def main(args):
 
             pred = interpolation(outputs.logits).squeeze(0).detach().cpu().numpy().transpose(1, 2, 0)
 
-            pred = np.argmax(pred, axis=2)
+            pred = np.argmax(pred, axis=2).astype(np.uint8)
             mask = encoded_inputs["labels"].squeeze(0).numpy()
 
             rgb_pred = colorize_mask(pred)
             rgb_mask = colorize_mask(mask, padding_size=args.padding_size)
 
-            imsave('%s/%s.png' % (args.save_path, name[0][:-4]), pred)
+            imsave('%s/%s.png' % (args.save_path, name[0][:-4]), pred, check_contrast=False)
 
             if args.split != "test":
                 rgb_pred.save('%s/%s_color.png' % (args.save_path, name[0][:-4]))
