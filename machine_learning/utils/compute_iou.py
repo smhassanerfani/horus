@@ -26,21 +26,19 @@ def _mACC(hist):
         return np.diag(hist).sum() / hist.sum()
 
 
-def compute_mIoU(gt_dir, pred_dir, json_dir="./"):
+def main(args):
+
     # get the gt and pred
     gt_imgs = []
     pred_imgs = []
 
-    masks_base = gt_dir
-    preds_base = pred_dir
-
-    for root, dirs, files in os.walk(masks_base, topdown=True):
+    for root, dirs, files in os.walk(args.gt_dir, topdown=True):
         for file in files:
             if file.endswith(".png"):
                 gt_imgs.append(os.path.join(root, file))
-                pred_imgs.append(os.path.join(preds_base, file))
+                pred_imgs.append(os.path.join(args.pred_dir, file))
 
-    with open(join(json_dir, 'labels_info.json'), 'r') as jf:
+    with open(join(args.json_dir, 'labels_info.json'), 'r') as jf:
         info = json.load(jf)
 
     num_classes = len(info)
@@ -53,9 +51,6 @@ def compute_mIoU(gt_dir, pred_dir, json_dir="./"):
             pred = np.array(Image.open(pred_imgs[ind]))
             label = np.array(Image.open(gt_imgs[ind]))
 
-            label = label - 1
-            label[label == -1] = 255
-
         except:
             print("We don't have the prediction of ",
                   gt_imgs[ind].split('/')[-1])
@@ -67,23 +62,18 @@ def compute_mIoU(gt_dir, pred_dir, json_dir="./"):
     iACCs = _iACC(hist)
 
     for ind_class in range(num_classes):
-        print(name_classes[ind_class] +
-              '\t' + str(round(iIoUs[ind_class] * 100, 2)) +
-              '\t' + str(round(iACCs[ind_class] * 100, 2)))
+        print(f"{name_classes[ind_class]}\t {100*iIoUs[ind_class]:.2f}\t {100*iACCs[ind_class]:.2f}")
 
-    print('mIoU' + '\t' + str(round(np.nanmean(iIoUs) * 100, 2)))
-    print('mACC' + '\t' + str(round(_mACC(hist) * 100, 2)))
-
-
-def main(args):
-    compute_mIoU(args.gt_dir, args.pred_dir, json_dir=args.json_dir)
+    print(f"mIoU\t {100*np.nanmean(iIoUs):.2f}")
+    print(f"mACC\t {100*_mACC(hist):.2f}")
 
 
 def get_arguments(
-    gt_dir="../atlantis/masks/test",
-    pred_dir="../snapshots/test_review_results_epoch30",
-    json_dir="./"
-):
+        gt_dir="../dataset/masks/test",
+        pred_dir="../results/PSPNet/test_visualization",
+        json_dir="./"
+    ):
+
     parser = argparse.ArgumentParser(description="Calculation of mIoU")
     parser.add_argument('-gt', '--gt-dir', default=gt_dir,
                         type=str, help='directory of inconsistency analysis data')
