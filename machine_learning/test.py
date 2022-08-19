@@ -9,11 +9,12 @@ from utils.palette import colorize_mask
 from dataloader import Horus
 from torch.utils.data import DataLoader
 import json
+import cv2
 
 
 def get_arguments(
         model="SegFormer",
-        split="test",
+        split="2022-08-17",
         num_classes=2,
         padding_size=(1440, 1920),
         batch_size=1,
@@ -22,7 +23,8 @@ def get_arguments(
         model_config="nvidia/segformer-b5-finetuned-cityscapes-1024-1024",
         # model_config="nvidia/segformer-b0-finetuned-ade-512-512",
         restore_from="./results/SegFormer-B5/snapshots/epoch25.pth",
-        save_path="./results/SegFormer-B5/test_visualization/",
+        masks_path="./results/SegFormer-B5/masks/",
+        edges_path="./results/SegFormer-B5/edges/",
         LABELS_INFO="utils/labels_info.json"
         ):
     
@@ -45,8 +47,10 @@ def get_arguments(
                         help="Where model restores configs from.")
     parser.add_argument("--restore-from", type=str, default=restore_from,
                         help="Where model restores parameters from.")
-    parser.add_argument("--save-path", type=str, default=save_path,
-                        help="Path to save results.")
+    parser.add_argument("--masks-path", type=str, default=masks_path,
+                        help="Path to save masks.")
+    parser.add_argument("--edges-path", type=str, default=edges_path,
+                        help="Path to save edges.")
     parser.add_argument("--labels-info", type=str, default=LABELS_INFO,
                         help="Path to the directory containing list and id of labels.")
     return parser.parse_args()
@@ -82,7 +86,8 @@ def main(args):
     model.cuda()
 
     try:
-        os.makedirs(args.save_path)
+        os.makedirs(args.masks_path)
+        os.makedirs(args.edges_path)
     except FileExistsError:
         pass
 
@@ -98,22 +103,18 @@ def main(args):
             # GPU deployment
             image = encoded_inputs["pixel_values"].cuda()
 
-            # Compute prediction and loss
+            # Compute prediction
             outputs = model(pixel_values=image)
-
             pred = interpolation(outputs.logits).squeeze(0).detach().cpu().numpy().transpose(1, 2, 0)
-
             pred = np.argmax(pred, axis=2).astype(np.uint8)
-            mask = encoded_inputs["labels"].squeeze(0).numpy()
 
-            rgb_pred = colorize_mask(pred)
-            rgb_mask = colorize_mask(mask, padding_size=args.padding_size)
+            # Save prediction as RGB
+            pred = colorize_mask(pred).convert('RGB')
+            pred.save(f"{args.masks_path}/{name[0][:-4]}.png")
 
-            imsave('%s/%s.png' % (args.save_path, name[0][:-4]), pred, check_contrast=False)
-
-            if args.split != "test":
-                rgb_pred.save('%s/%s_color.png' % (args.save_path, name[0][:-4]))
-                rgb_mask.save('%s/%s_gt.png' % (args.save_path, name[0][:-4]))
+            # Save edges
+            edge = cv2.Canny(np.array(pred, dtype=np.uint8), 95, 100)
+            cv2.imwrite(f"{args.edges_path}/{name[0][:-4]}.png", edge)
 
         print("finish")
 
