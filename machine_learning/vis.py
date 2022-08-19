@@ -9,12 +9,12 @@ from dataloader import Horus
 
 
 def get_arguments(
-        split="val",
+        split="2022-08-17",
         padding_size=False, # (1440, 1920)
         data_directory="./dataset",
-        pred_directory="./results/SegFormer/val_visualization",
-        save_path="./results/SegFormer/val_visualization_v2/"
-    ):
+        pred_directory="./results/SegFormer-B5/2022-08-17",
+        save_path="./results/SegFormer-B5/2022-08-17_vis/"
+        ):
     
     parser = argparse.ArgumentParser(description=f"Visualization on Horus dataset.")
     parser.add_argument("--split", type=str, default=split,
@@ -39,25 +39,14 @@ def main(args):
 
     dataset = Horus(args.data_directory, split=args.split, joint_transform=None, transform="ndarray")
 
+    for image, name, width, height in tqdm(dataset):
 
-    for image, mask, name, width, height in tqdm(dataset):
+        pred = io.imread(os.path.join(args.pred_directory, name.replace(".jpg", ".png")))
 
-        rgb_mask = colorize_mask(mask, padding_size=args.padding_size)
-        rgb_mask = np.asarray(rgb_mask.convert('RGB'), dtype=np.uint8)
+        pred = (pred*0.7 + image*0.3)
+        pred = Image.fromarray(pred.astype(np.uint8))
 
-        mask_img = (rgb_mask*0.7 + image*0.3)
-        mask_img = Image.fromarray(mask_img.astype(np.uint8))
-
-        mask_prd = io.imread(os.path.join(args.pred_directory, name.replace(".jpg", ".png")))
-        mask_prd = mask_prd / 255
-        mask_prd = colorize_mask(mask_prd, padding_size=args.padding_size)
-        mask_prd = np.asarray(mask_prd.convert('RGB'), dtype=np.uint8)
-
-        mask_prd = (mask_prd*0.7 + image*0.3)
-        mask_prd = Image.fromarray(mask_prd.astype(np.uint8))
-
-        mask_img.save('%s/%s_gt.png' % (args.save_path, name[:-4]))
-        mask_prd.save('%s/%s_pr.png' % (args.save_path, name[:-4]))
+        pred.save(f"{args.save_path}/{name[:-4]}.png")
 
     print("finish")
 
