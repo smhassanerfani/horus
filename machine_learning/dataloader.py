@@ -12,7 +12,7 @@ class Horus(data.Dataset):
         super(Horus, self).__init__()
         self.root = root
         self.split = split
-        self.images_base = os.path.join(self.root, "images", self.split)
+        self.images_base = os.path.join(self.root, self.split, "images")
         self.items_list = self.get_images_list(self.images_base)
 
         self.joint_transform = joint_transform
