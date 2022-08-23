@@ -14,20 +14,21 @@ import cv2
 
 def get_arguments(
         model="SegFormer",
-        split="2022-08-17",
+        split="2022-08-19",
         num_classes=2,
         padding_size=(1440, 1920),
         batch_size=1,
         num_workers=1,
-        data_directory="./dataset",
+        data_directory="./dataset/deployment",
         model_config="nvidia/segformer-b5-finetuned-cityscapes-1024-1024",
         # model_config="nvidia/segformer-b0-finetuned-ade-512-512",
         restore_from="./results/SegFormer-B5/snapshots/epoch25.pth",
-        masks_path="./results/SegFormer-B5/masks/",
-        edges_path="./results/SegFormer-B5/edges/",
         LABELS_INFO="utils/labels_info.json"
         ):
-    
+
+    masks_path = f"./results/deployment/{split}/masks/"
+    edges_path = f"./results/deployment/{split}/edges/"
+
     parser = argparse.ArgumentParser(description=f"Testing {model} on Horus 'test' set.")
     parser.add_argument("--model", type=str, default=model,
                         help=f"Model name: {model}.")
