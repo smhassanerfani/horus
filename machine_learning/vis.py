@@ -9,13 +9,14 @@ from dataloader import Horus
 
 
 def get_arguments(
-        split="2022-08-17",
+        split="2022-08-19",
         padding_size=False, # (1440, 1920)
-        data_directory="./dataset",
-        pred_directory="./results/SegFormer-B5/2022-08-17",
-        save_path="./results/SegFormer-B5/2022-08-17_vis/"
+        data_directory="./dataset/deployment"
         ):
-    
+
+    pred_directory = f"./results/deployment/{split}/masks"
+    save_path = f"./results/deployment/{split}/vis/"
+
     parser = argparse.ArgumentParser(description=f"Visualization on Horus dataset.")
     parser.add_argument("--split", type=str, default=split,
                         help="Horus 'test' set.")
