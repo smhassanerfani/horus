@@ -4,6 +4,7 @@ import numpy as np
 import argparse
 from utils import aruco_3D_to_dict, pair_coordinates, spatial_resection, perspective_projection
 
+
 def get_arguments(
         images_path="../machine_learning/dataset/deployment/2022-08-19/images",
         camera_config_path="./camera_config_beena.yml",
@@ -25,7 +26,8 @@ def get_arguments(
     parser.add_argument("--save-path", type=str, default=save_path,
                         help="Path to save results.")
     parser.add_argument("--plot-permission", default=plot_permission, action="store_true",
-                        help="Number of classes to predict, excluding background.")
+                        help="Permission for plotting.")
+
     return parser.parse_args()
 
 
