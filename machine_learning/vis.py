@@ -49,7 +49,6 @@ def main(args):
         mask_img = Image.fromarray(mask_img.astype(np.uint8))
 
         mask_prd = io.imread(os.path.join(args.pred_directory, name.replace(".jpg", ".png")))
-        mask_prd = mask_prd / 255
         mask_prd = colorize_mask(mask_prd, padding_size=args.padding_size)
         mask_prd = np.asarray(mask_prd.convert('RGB'), dtype=np.uint8)
 

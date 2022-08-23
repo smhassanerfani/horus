@@ -14,15 +14,15 @@ from joint_transforms import Resize
 
 def get_arguments(
         model="TransUNet",
-        split="val",
+        split="test",
         num_classes=2,
         input_size =448,
         padding_size=(1440, 1920),
         batch_size=1,
         num_workers=1,
         data_directory="./dataset",
-        restore_from="./results/TransUNet/model_weights/epoch30.pth",
-        save_path="./results/TransUNet/val_visualization_v2/"
+        restore_from="./results/TransUNet/snapshots/epoch30.pth",
+        save_path="./results/TransUNet/test_visualization/"
     ):
     
     parser = argparse.ArgumentParser(description=f"Testing {model} on Horus 'test' set.")
@@ -88,13 +88,13 @@ def main(args):
 
             pred = interpolation(pred).squeeze(0).detach().cpu().numpy().transpose(1, 2, 0)
 
-            pred = np.argmax(pred, axis=2)
+            pred = np.argmax(pred, axis=2).astype(np.uint8)
             mask = mask.squeeze(0).numpy()
 
             rgb_pred = colorize_mask(pred)
             rgb_mask = colorize_mask(mask, padding_size=args.padding_size)
 
-            imsave('%s/%s.png' % (args.save_path, name[0][:-4]), pred)
+            imsave('%s/%s.png' % (args.save_path, name[0][:-4]), pred, check_contrast=False)
 
             if args.split != "test":
                 rgb_pred.save('%s/%s_color.png' % (args.save_path, name[0][:-4]))
