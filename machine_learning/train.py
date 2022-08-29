@@ -2,7 +2,7 @@ import argparse
 import os
 import torch
 import torch.backends.cudnn as cudnn
-from dataloader import Materials
+from dataloader import Horus
 from utils.loss import FocalLoss
 from torch.utils.data import DataLoader
 from models.pspnet import PSPNet
@@ -116,8 +116,8 @@ def main(args):
         joint_transforms.RandomHorizontallyFlip()]
 
     train_joint_transform = joint_transforms.Compose(train_joint_transform_list)
-    train_dataset = Materials(args.data_directory, split="train", joint_transform=train_joint_transform)
-    val_dataset = Materials(args.data_directory, split="val", joint_transform=train_joint_transform)
+    train_dataset = Horus(args.data_directory, split="train", joint_transform=train_joint_transform)
+    val_dataset = Horus(args.data_directory, split="val", joint_transform=train_joint_transform)
 
     train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True,
                                   num_workers=args.num_workers, pin_memory=True, drop_last=False)
@@ -149,7 +149,7 @@ def main(args):
 def get_arguments(
         MODEL="PSPNet",
         NUM_CLASSES=1,
-        SNAPSHOT_DIR="results/PSPNet/model_weights_test",
+        SNAPSHOT_DIR="results/PSPNet/snapshots",
         DATA_DIRECTORY="dataset",
         INPUT_SIZE=500,
         BATCH_SIZE=2,
