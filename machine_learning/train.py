@@ -12,7 +12,7 @@ from utils.plrds import AdjustLearningRate
 def get_arguments(
         MODEL="TransUNet",
         NUM_CLASSES=2,
-        SNAPSHOT_DIR="./results/TransUNet/model_weights",
+        SNAPSHOT_DIR="./results/TransUNet/snapshots",
         DATA_DIRECTORY="./dataset",
         INPUT_SIZE=448,
         BATCH_SIZE=2,
@@ -65,7 +65,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, lr_estimator, interpolatio
         # GPU deployment
         images = images.cuda()
         masks = masks.cuda()
-        
+
         # Compute prediction
         pred = model(images)
 
