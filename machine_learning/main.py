@@ -4,6 +4,7 @@ from scipy import stats
 import argparse
 from utils.knn import KNearestNeighbor
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import os
 
 
@@ -58,6 +59,7 @@ def estimate_stage(image, point_cloud2d, point_cloud3d):
 
     return left_shore, right_shore
 
+
 def plot_stats(file_name, save_path, left_shore, right_shore):
     
     fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(16,9))
@@ -88,6 +90,38 @@ def plot_stats(file_name, save_path, left_shore, right_shore):
         pass
 
     save_path = os.path.join(save_path, "stats_plots", f"{file_name.split('.')[0]}.png")
+    plt.savefig(save_path)
+
+
+def plot_section(file_name, save_path, left_shore, right_shore):
+    fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(12, 9))
+
+    x = [-2.0, 2.0, 3.5, -3.5]
+    y = [0.0, 0.0, 1.70, 1.70]
+    axes.add_patch(patches.Polygon(xy=list(zip(x, y)), fill=False))
+
+    right_shore = right_shore[(right_shore[:, 0] < 4.0) & (right_shore[:, 0] > 3.0)]
+    left_shore = left_shore[(left_shore[:, 0] < 4.0) & (left_shore[:, 0] > 3.0)]
+
+    x_values = [right_shore[:, 1].mean(), left_shore[:, 1].mean()]
+    y_values = [right_shore[:, 2].mean(), left_shore[:, 2].mean()]
+    axes.plot(x_values, y_values, 'b', linestyle="--")
+
+    axes.set_ylim([0.0, 1.70])
+    axes.set_xlim([-3.50, 3.50])
+
+    time = file_name.split(".")[0].split("-")[-1]
+    axes.set_title(f'Stage Fluctuation on Aug 18, 2022 [{time[:2]}:{time[2:]}]')
+    axes.set_xlabel('Cross Section (m)')
+    axes.set_ylabel('Stage (m)')
+    axes.grid(True)
+
+    try:
+        os.makedirs(os.path.join(save_path, "section_plots"))
+    except FileExistsError:
+        pass
+
+    save_path = os.path.join(save_path, "section_plots", f"{file_name.split('.')[0]}.png")
     plt.savefig(save_path)
 
 
@@ -137,6 +171,7 @@ def main(args):
 
                 if args.plot_permission:
                     plot_stats(file, args.save_path, left_shore, right_shore)
+                    plot_section(file, args.save_path, left_shore, right_shore)
                     visualization(image, file, args.save_path, point_cloud2d, left_shore, right_shore)
 
                 records[file.split(".")[0]] = [left_shore[:, 2].mean(), stats.mode(left_shore[:, 2])[0][0], right_shore[:, 2].mean(), stats.mode(right_shore[:, 2])[0][0]]
@@ -145,6 +180,7 @@ def main(args):
     with open(save_path, 'w') as f:
         for key, value in records.items():
             f.write(f"{key}, {value[0]}, {value[1]}, {value[2]}, {value[3]}\n")
+
 
 if __name__ == "__main__":
     args = get_arguments()
