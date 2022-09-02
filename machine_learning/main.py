@@ -98,30 +98,33 @@ def plot_section(file_name, save_path, left_shore, right_shore):
 
     x = [-2.0, 2.0, 3.5, -3.5]
     y = [0.0, 0.0, 1.70, 1.70]
-    axes.add_patch(patches.Polygon(xy=list(zip(x, y)), fill=False))
+    axes.add_patch(patches.Polygon(xy=list(zip(x, y)), fill=False, linewidth=3))
 
     right_shore = right_shore[(right_shore[:, 0] < 4.0) & (right_shore[:, 0] > 3.0)]
     left_shore = left_shore[(left_shore[:, 0] < 4.0) & (left_shore[:, 0] > 3.0)]
 
-    x_values = [right_shore[:, 1].mean(), left_shore[:, 1].mean()]
+    x_values = [-right_shore[:, 1].mean(), -left_shore[:, 1].mean()]
     y_values = [right_shore[:, 2].mean(), left_shore[:, 2].mean()]
-    axes.plot(x_values, y_values, 'b', linestyle="--")
+    axes.plot(x_values, y_values, 'b', linestyle="--", linewidth=3)
 
     axes.set_ylim([0.0, 1.70])
+    axes.tick_params(axis='y', labelsize=20)
+
     axes.set_xlim([-3.50, 3.50])
+    axes.tick_params(axis='x', labelsize=20)
 
     time = file_name.split(".")[0].split("-")[-1]
-    axes.set_title(f'Stage Fluctuation on Aug 18, 2022 [{time[:2]}:{time[2:]}]')
-    axes.set_xlabel('Cross Section (m)')
-    axes.set_ylabel('Stage (m)')
+    axes.set_title(f'Water Level on Aug 18, 2022 [{time[:2]}:{time[2:]}]', fontsize=24)
+    axes.set_xlabel('Cross Section (m)', fontsize=24)
+    axes.set_ylabel('Gauge Stage (m)', fontsize=24)
     axes.grid(True)
 
     try:
-        os.makedirs(os.path.join(save_path, "section_plots"))
+        os.makedirs(os.path.join(save_path, "section_plots_inverse"))
     except FileExistsError:
         pass
 
-    save_path = os.path.join(save_path, "section_plots", f"{file_name.split('.')[0]}.png")
+    save_path = os.path.join(save_path, "section_plots_inverse", f"{file_name.split('.')[0]}.png")
     plt.savefig(save_path)
 
 
