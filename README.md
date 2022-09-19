@@ -10,7 +10,7 @@ The "Eye of Horus" is a concept and symbol in ancient Egyptian religion that rep
 Inspired by the concept &ndash; in this project &ndash; "Eye of Horus" is a vision-based framework for measuring water-related parameters like water level from time-lapse images. Follwoing animation is related to setup deployment on Aug 18, 2022. The segmented stream flow, water level fluctuation at cross-section, and stage hydrographs are based on the captured images at one-minute intervals.
 
 <p align="center">
-  <img width="80%" height="80%" src="https://github.com/smhassanerfani/svisions/blob/main/wiki/2022-08-19.gif"><br>
+  <img width="100%" height="100%" src="https://github.com/smhassanerfani/svisions/blob/main/wiki/setup_deployment.gif"><br>
   Figure 1. Setup deployment on Aug 18, 2022, time-laps images captured by Raspberry Pi camera Module V2.
 </p>
 
