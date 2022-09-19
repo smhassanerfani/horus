@@ -7,6 +7,13 @@ The "Eye of Horus" is a concept and symbol in ancient Egyptian religion that rep
   Figure 1. A staff gage gives a quick estimate of gage height (stage) of a river. Photo by <a href="https://www.usgs.gov/special-topics/water-science-schoo">Water Science School</a> on <a href="https://www.usgs.gov/media/images/a-staff-gage-gives-a-quick-estimate-gage-height-stage-a-river">USGS.gov</a>.
 </p>
 
+"Eye of Horus" is a vision-based framework for measuring water-related parameters like water level from time-lapse images. Follwoing animation is related to setup deployment on Aug 18, 2022. The segmented stream flow, water level fluctuation at cross-section, and stage hydrographs are based on the captured images at one-minute intervals.
+
+<p align="center">
+  <img src="https://github.com/smhassanerfani/svisions/blob/main/wiki/2022-08-19.gif"><br>
+  Figure 1. Setup deployment on Aug 18, 2022, time-laps images captured by Raspberry Pi camera Module V2.
+</p>
+
 ## Table of contents
 
 - [Field Survey](#Field-Survey)
