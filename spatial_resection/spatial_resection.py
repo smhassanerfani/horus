@@ -37,6 +37,7 @@ def main(args):
         for file in files:
             if file.endswith(".jpg"):
 
+                print(f"Start Processing {file}")
                 image = cv2.imread(os.path.join(root, file))
                 aruco_3D_dict = aruco_3D_to_dict(args.aruco_coordinates_path)
 
