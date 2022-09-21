@@ -21,7 +21,7 @@ def undistortion_test(image, camera_config):
     print("Undistorted images is dumped!")
 
 if __name__ == "__main__":
-    ret, mtx, dist, rvecs, tvecs = calibrate_chessboard(mode="nRT")
+    ret, mtx, dist, rvecs, tvecs = calibrate_chessboard(real_time=False)
     save_coefficients(mtx, dist, rvecs, tvecs, './camera_config.yml')
 
     # image = "./images/img-06.jpeg"
