@@ -9,10 +9,10 @@ import os
 
 
 def get_arguments(
-        edges_path="./results/deployment/2022-08-19/edges",
+        edges_path="./results/deployment/2022-08-25/edges",
         point_cloud3D="../spatial_resection/total_levee_gbc.xyz",
-        point_cloud2D="./results/deployment/2022-08-19/2022-08-19-0906.pts",
-        save_path="../machine_learning/results/deployment/2022-08-19",
+        point_cloud2D="./results/deployment/2022-08-25/2022-08-25-1437.pts",
+        save_path="../machine_learning/results/deployment/2022-08-25",
         plot_permission=True
         ):
 
@@ -62,27 +62,39 @@ def estimate_stage(image, point_cloud2d, point_cloud3d):
 
 def plot_stats(file_name, save_path, left_shore, right_shore):
     
-    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(16,9))
-    
-    axes[0, 0].scatter(right_shore[:, 0], right_shore[:, 2])
-    axes[0, 0].set_title('Stage Fluctuation along Right Shore')
-    axes[0, 0].set_xlabel('Distance (m)')
-    axes[0, 0].set_ylabel('Stage (m)')
-    axes[0, 0].grid(True)
-    
-    axes[0, 1].boxplot(right_shore[:, 2])
-    axes[0, 1].set_title('Stage Fluctuation along Right Shore')
-    axes[0, 1].set_ylabel('Stage (m)')
-    
-    axes[1, 0].scatter(left_shore[:, 0], left_shore[:, 2])
-    axes[1, 0].set_title('Stage Fluctuation along Left Shore')
-    axes[1, 0].set_xlabel('Distance (m)')
-    axes[1, 0].set_ylabel('Stage (m)')
-    axes[1, 0].grid(True)
-    
-    axes[1, 1].boxplot(left_shore[:, 2])
-    axes[1, 1].set_title('Stage Fluctuation along Left Shore')
-    axes[1, 1].set_ylabel('Stage (m)')
+    fig = plt.figure(figsize=(16, 9))
+
+    x = np.linspace(0., 5., 100)
+    y = np.sin(x)
+
+    plt.subplots_adjust(wspace=0.25, hspace=0.25)
+
+    sub1 = fig.add_subplot(2, 2, 1)  # two rows, two columns, fist cell
+    sub1.boxplot(right_shore[:, 2])
+    sub1.set_title('Stage Fluctuation along Right Shore')
+    sub1.set_ylabel('Stage (m)')
+    sub1.set_ylim(0, 0.45)
+    sub1.grid(True)
+
+    # Create second axes, the top-left plot with orange plot
+    sub2 = fig.add_subplot(2, 2, 2)  # two rows, two columns, second cell
+    sub2.boxplot(left_shore[:, 2])
+    sub2.set_title('Stage Fluctuation along Left Shore')
+    sub2.set_ylabel('Stage (m)')
+    sub2.set_ylim(0, 0.45)
+    sub2.grid(True)
+
+    # Create third axes, a combination of third and fourth cell
+    sub3 = fig.add_subplot(2, 2, (3, 4))  # two rows, two colums, combined third and fourth cell
+    sub3.scatter(right_shore[:, 0], right_shore[:, 2], color="teal", label="Right Bank")
+    sub3.scatter(left_shore[:, 0], left_shore[:, 2], color="magenta", label="Left Bank")
+    sub3.set_title('Stage Fluctuation along the Creek')
+    sub3.set_xlabel('Distance (m)')
+    sub3.set_ylabel('Stage (m)')
+    sub3.set_ylim(0, 0.45)
+    sub3.set_xlim(0.5, 6.5)
+    sub3.grid(True)
+    sub3.legend()
 
     try:
         os.makedirs(os.path.join(save_path, "stats_plots"))
