@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 from io import BytesIO
 from time import sleep
-from picamera import PiCamera
+# from picamera import PiCamera
 
 def calibrate_chessboard(imgs_path="./images", width=6, height=9, mode="RT"):
     
@@ -44,8 +44,8 @@ def calibrate_chessboard(imgs_path="./images", width=6, height=9, mode="RT"):
     except FileExistsError:
         pass
 
-    camera = PiCamera()
-    camera.resolution = (1024, 768)
+    # camera = PiCamera()
+    # camera.resolution = (1024, 768)
 
     # cunstruct a stream to hold image data
     image_stream = BytesIO()
@@ -67,7 +67,7 @@ def calibrate_chessboard(imgs_path="./images", width=6, height=9, mode="RT"):
 
             camera.start_preview()
             sleep(3)
-            camera.capture(image_stream, format="jpeg")
+            camera.capture(image_stream, format="jpg")
 
             image_stream.seek(0)
             file_bytes = np.asarray(bytearray(image_stream.read()), dtype=np.uint8)
@@ -84,7 +84,7 @@ def calibrate_chessboard(imgs_path="./images", width=6, height=9, mode="RT"):
             # If found, add object points, image points (after refining them)
             if ret == True:
                 print(f"Image #{counter:02d} is captured.")
-                cv2.imwrite(f'images/img-{counter:02d}.jpeg', img)
+                cv2.imwrite(f'images/img-{counter:02d}.jpg', img)
                 
                 objpoints.append(objp)
                 corners2 = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
@@ -92,7 +92,7 @@ def calibrate_chessboard(imgs_path="./images", width=6, height=9, mode="RT"):
                 
                 # Draw and display the corners exit
                 cv2.drawChessboardCorners(img, (width, height), corners2, ret)
-                cv2.imwrite(f'{imgs_path}/cimages/cimg-{counter:02d}.jpeg', img)
+                cv2.imwrite(f'{imgs_path}/cimages/cimg-{counter:02d}.jpg', img)
                 counter += 1
 
         camera.stop_preview()
@@ -101,10 +101,11 @@ def calibrate_chessboard(imgs_path="./images", width=6, height=9, mode="RT"):
         images = []
         for root, dirs, files in os.walk(imgs_path):
             for file in files:
-                if file.endswith(".jpeg"):
+                if file.endswith(".jpg"):
                     images.append(os.path.join(root, file))
 
         for fname in images:
+
             img = cv2.imread(fname)
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             # Find the chess board corners
@@ -120,7 +121,7 @@ def calibrate_chessboard(imgs_path="./images", width=6, height=9, mode="RT"):
                 
                 # Draw and display the cornersexit
                 cv2.drawChessboardCorners(img, (width, height), corners2, ret)
-                cv2.imwrite(f'{imgs_path}/cimages/c{fname.split("/")[-1].split(".")[0]}.jpeg', img)
+                cv2.imwrite(f'{imgs_path}/cimages/c{os.path.split(fname)[1]}', img)
 
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
     rvecs = [arr.T for arr in rvecs]
