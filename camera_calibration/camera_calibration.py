@@ -3,9 +3,9 @@ import numpy as np
 import cv2
 from io import BytesIO
 from time import sleep
-# from picamera import PiCamera
 
-def calibrate_chessboard(imgs_path="./images", width=6, height=9, mode="RT"):
+
+def calibrate_chessboard(imgs_path="./images", real_time=True, width=6, height=9):
     
     """Estimate the intrinsic and extrinsic properties of a camera.
     This code is written according to:
@@ -21,8 +21,8 @@ def calibrate_chessboard(imgs_path="./images", width=6, height=9, mode="RT"):
         Number of corners (from top-to-bottom).
     height: int
        Number of corners (from left-to-right).
-    mode: str
-        Mode of calibration, when `RT` the calibration and capturing images are done
+    real_time: bool
+        Mode of calibration, when `True` the calibration and capturing images are done
         at the same time, in a real-time manner.
 
     Returns
@@ -44,12 +44,6 @@ def calibrate_chessboard(imgs_path="./images", width=6, height=9, mode="RT"):
     except FileExistsError:
         pass
 
-    # camera = PiCamera()
-    # camera.resolution = (1024, 768)
-
-    # cunstruct a stream to hold image data
-    image_stream = BytesIO()
-
     # termination criteria
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
@@ -61,9 +55,17 @@ def calibrate_chessboard(imgs_path="./images", width=6, height=9, mode="RT"):
     objpoints = []  # 3d point in real world space
     imgpoints = []  # 2d points in image plane.
 
-    if mode == "RT":
+    if real_time:
+        from picamera import PiCamera
+        
         counter = 0
         while counter < 20:
+
+            camera = PiCamera()
+            camera.resolution = (1920, 1440)
+
+            # cunstruct a stream to hold image data
+            image_stream = BytesIO()
 
             camera.start_preview()
             sleep(3)
