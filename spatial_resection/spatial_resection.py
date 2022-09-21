@@ -6,11 +6,11 @@ from utils import aruco_3D_to_dict, pair_coordinates, spatial_resection, perspec
 
 
 def get_arguments(
-        images_path="../machine_learning/dataset/deployment/2022-08-19/images",
-        camera_config_path="./camera_config_beena.yml",
+        images_path="../machine_learning/dataset/deployment/2022-08-25/images",
+        camera_config_path="./camera_config.yml",
         aruco_coordinates_path="./aruco_markers_3D.txt",
         point_cloud3D="./total_levee_gbc.xyz",
-        save_path="../machine_learning/results/deployment/2022-08-19",
+        save_path="../machine_learning/results/deployment/2022-08-25",
         plot_permission=True
         ):
     
@@ -36,7 +36,7 @@ def main(args):
     for root, dir, files in os.walk(args.images_path, topdown=True):
         for file in files:
             if file.endswith(".jpg"):
-
+                file = "2022-08-25-1437.jpg"
                 print(f"Start Processing {file}")
                 image = cv2.imread(os.path.join(root, file))
                 aruco_3D_dict = aruco_3D_to_dict(args.aruco_coordinates_path)
