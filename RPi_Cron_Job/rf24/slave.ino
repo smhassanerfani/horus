@@ -46,53 +46,53 @@ RTC_DS3231 rtc;
 int send_interval = 5000;
 
 void setup() {
-	// begin serial communication
-	Serial.begin(115200);
-	Serial.println("Executing horus_transmitter.ino");
+    // begin serial communication
+    Serial.begin(115200);
+    Serial.println("Executing horus_transmitter.ino");
 
-	// initialize SD card
-	if (!SD.begin()) {
-	Serial.println("SD card did not begin.");
-	while (1);
-	}
+    // initialize SD card
+    if (!SD.begin()) {
+    Serial.println("SD card did not begin.");
+    while (1);
+    }
 
-	// begin the clock
-	rtc.begin();
+    // begin the clock
+    rtc.begin();
 
-	// uncomment to set the date and time of the RTC to when the sketch was compiled (only if the clock has never been initialized)
-	//rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    // uncomment to set the date and time of the RTC to when the sketch was compiled (only if the clock has never been initialized)
+    //rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
 
-	// initialize radio
-	radio.begin();
+    // initialize radio
+    radio.begin();
 
-	// Set the trasmit power to highest available to increase to the logest range we can achieve
-	radio.setPALevel(RF24_PA_MAX);
+    // Set the trasmit power to highest available to increase to the logest range we can achieve
+    radio.setPALevel(RF24_PA_MAX);
 
-	// Set the speed of trasmission to the quickest/ longest available
-	// RF24_250KBPS for 250kbs, RF24_1MBPS for 1Mbps, or RF24_2MBPS for 2Mbps
-	radio.setDataRate(RF24_250KBPS);
+    // Set the speed of trasmission to the quickest/ longest available
+    // RF24_250KBPS for 250kbs, RF24_1MBPS for 1Mbps, or RF24_2MBPS for 2Mbps
+    radio.setDataRate(RF24_250KBPS);
 
-	// Set RF communication channel (0-127).
-	radio.setChannel(124);
+    // Set RF communication channel (0-127).
+    radio.setChannel(124);
 
-	radio.setAutoAck(true);
-	radio.enableDynamicPayloads();
-	radio.setRetries(5, 15);
+    radio.setAutoAck(true);
+    radio.enableDynamicPayloads();
+    radio.setRetries(5, 15);
 
-	radio.openWritingPipe(pipes[0]);
-	radio.openReadingPipe(1, pipes[1]);
+    radio.openWritingPipe(pipes[0]);
+    radio.openReadingPipe(1, pipes[1]);
 
-	// set module as a receiver (ensures nothing is sent during this time)
-	radio.startListening();
+    // set module as a receiver (ensures nothing is sent during this time)
+    radio.startListening();
 }
 
 void loop() {
 
-  // This is what we receive from the other device (the transmitter)
-  unsigned char data;
+    // This is what we receive from the other device (the transmitter)
+    unsigned char data;
 
-  // Is there any data for us to get?
-  if (radio.available()) {
+    // Is there any data for us to get?
+    if (radio.available()) {
 
     // Go and read the data and put it into that variable
     while (radio.available()) {
@@ -108,13 +108,13 @@ void loop() {
     float counter = 0;
     for (int i = 0; i < 5; i++) 
     {
-		water_level[i] = sonar.ping_cm();
-		delay(100);
-		if (water_level[i] > 0)
-		{
-			total_water_level += water_level[i];
-			counter++;
-		}
+        water_level[i] = sonar.ping_cm();
+        delay(100);
+        if (water_level[i] > 0)
+        {
+            total_water_level += water_level[i];
+            counter++;
+        }
     }
     
     float avgDist = (float)total_water_level / counter;
@@ -122,8 +122,8 @@ void loop() {
     Serial.print("Sending Data: ");
     for (int i = 0; i < 5; i++)
 	{
-		Serial.print(water_level[i]);
-		Serial.print(", ");
+        Serial.print(water_level[i]);
+        Serial.print(", ");
 	}
     Serial.print("---> Average: ");
     Serial.print(avgDist);
@@ -158,39 +158,39 @@ void loop() {
 
 void saveData(DateTime now, int water_level[], float avgDist){
 	
-	// define and open file to save data
-	File myFile = SD.open("001.csv", FILE_WRITE);
+    // define and open file to save data
+    File myFile = SD.open("001.csv", FILE_WRITE);
     // if the file opens, print the time stamp and distance reading
     if (myFile) {
-		// write date and time
-		myFile.print(now.year(), DEC);
-		myFile.print('-');
-		myFile.print(now.month(), DEC);
-		myFile.print('-');
-		myFile.print(now.day(), DEC);
-		myFile.print(',');
-		myFile.print(now.hour(), DEC);
-		myFile.print(':');
-		myFile.print(now.minute(), DEC);
-		myFile.print(':');
-		myFile.print(now.second(), DEC);
-		myFile.print(',');
+        // write date and time
+        myFile.print(now.year(), DEC);
+        myFile.print('-');
+        myFile.print(now.month(), DEC);
+        myFile.print('-');
+        myFile.print(now.day(), DEC);
+        myFile.print(',');
+        myFile.print(now.hour(), DEC);
+        myFile.print(':');
+        myFile.print(now.minute(), DEC);
+        myFile.print(':');
+        myFile.print(now.second(), DEC);
+        myFile.print(',');
 
-		// write the Ultra Sonic data
-		for (int i = 0; i < 5; i++)
-		{
-			myFile.print(water_level[i]); 
-			myFile.print(',');
-		}
-      
-		myFile.print(avgDist); 
+        // write the Ultra Sonic data
+        for (int i = 0; i < 5; i++)
+        {
+            myFile.print(water_level[i]); 
+            myFile.print(',');
+        }
 
-		myFile.println();
-		myFile.close();
+        myFile.print(avgDist); 
+
+        myFile.println();
+        myFile.close();
     }
     
-	// if the file does not open, print a message to the Serial monitor
+    // if the file does not open, print a message to the Serial monitor
     else {
-		Serial.println("File did not open!");
-	}
+        Serial.println("File did not open!");
+    }
 }
