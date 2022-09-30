@@ -134,7 +134,6 @@ void loop() {
     String water_level_str = String(avgDist);
     static char send_payload[50];
     water_level_str.toCharArray(send_payload, 50);
-    // Serial.println(send_payload);
 
     // set module as a transmitter
     radio.stopListening();
