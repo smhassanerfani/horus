@@ -92,65 +92,67 @@ void loop() {
     unsigned char data;
 
     // Is there any data for us to get?
-    if (radio.available()) {
-
-    // Go and read the data and put it into that variable
-    while (radio.available()) {
-      radio.read(&data, sizeof(char));
-    }
-
-    // get the current time
-    DateTime now = rtc.now();
-
-    // take five distance readings and take the average
-    int water_level[5];
-    float total_water_level = 0;
-    float counter = 0;
-    for (int i = 0; i < 5; i++) 
+    if (radio.available())
     {
-        water_level[i] = sonar.ping_cm();
-        delay(100);
-        if (water_level[i] > 0)
+
+        // Go and read the data and put it into that variable
+        while (radio.available()) 
         {
-            total_water_level += water_level[i];
-            counter++;
+            radio.read(&data, sizeof(char));
         }
-    }
-    
-    float avgDist = (float)total_water_level / counter;
-    
-    Serial.print("Sending Data: ");
-    for (int i = 0; i < 5; i++)
-	{
-        Serial.print(water_level[i]);
-        Serial.print(", ");
-	}
-    Serial.print("---> Average: ");
-    Serial.print(avgDist);
-    Serial.println(" cm");
-    delay(100);
 
-    // convert the distance to a character array for sending
-    String water_level_str = String(avgDist);
-    static char send_payload[50];
-    water_level_str.toCharArray(send_payload, 50);
+        // get the current time
+        DateTime now = rtc.now();
 
-    // set module as a transmitter
-    radio.stopListening();
+        // take five distance readings and take the average
+        int water_level[5];
+        float total_water_level = 0;
+        float counter = 0;
+        for (int i = 0; i < 5; i++) 
+        {
+            water_level[i] = sonar.ping_cm();
+            delay(100);
+            if (water_level[i] > 0)
+            {
+                total_water_level += water_level[i];
+                counter++;
+            }
+        }
+        
+        float avgDist = (float)total_water_level / counter;
+        
+        Serial.print("Sending Data: ");
+        for (int i = 0; i < 5; i++)
+    	{
+            Serial.print(water_level[i]);
+            Serial.print(", ");
+    	}
+        Serial.print("---> Average: ");
+        Serial.print(avgDist);
+        Serial.println(" cm");
+        delay(100);
 
-    // send the distance reading
-    Serial.print("Now sending length: ");
-    Serial.println(sizeof(send_payload));
-    radio.write(send_payload, sizeof(send_payload));
+        // convert the distance to a character array for sending
+        String water_level_str = String(avgDist);
+        static char send_payload[50];
+        water_level_str.toCharArray(send_payload, 50);
 
-    // Now, resume listening so we catch the next packets.
-    radio.startListening();
+        // set module as a transmitter
+        radio.stopListening();
 
-    // save time stamp and distance reading to SD card
-    saveData(now, water_level, avgDist);
+        // send the distance reading
+        Serial.print("Now sending length: ");
+        Serial.println(sizeof(send_payload));
+        radio.write(send_payload, sizeof(send_payload));
 
-    // delay loop for the transmission interval
-    delay(send_interval);
+        // Now, resume listening so we catch the next packets.
+        radio.startListening();
+
+        // save time stamp and distance reading to SD card
+        saveData(now, water_level, avgDist);
+
+        // delay loop for the transmission interval
+        delay(send_interval);
 
     }
 }
