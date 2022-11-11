@@ -37,7 +37,7 @@ const int time_interval = 1;          // interval in which the minutes will be d
 unsigned long prevTimeElapsed = 0;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   pinMode(pinCS, OUTPUT);
   pinMode(LED, OUTPUT);
   pinMode(trigPin, OUTPUT);
@@ -208,12 +208,12 @@ void logData() {
     myFile.print(avgDist);
 
     // write the power data
-    myFile.print(busvoltage);
-    myFile.print(',');
-    myFile.print(current_mA);
-    myFile.print(',');
-    myFile.print(power_mW);
-    myFile.print(',');
+    // myFile.print(busvoltage);
+    // myFile.print(',');
+    // myFile.print(current_mA);
+    // myFile.print(',');
+    // myFile.print(power_mW);
+    // myFile.print(',');
 
     myFile.println();
     myFile.close();           // closes and saves the file to the SD card
