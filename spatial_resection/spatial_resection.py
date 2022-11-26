@@ -6,11 +6,11 @@ from utils import aruco_3D_to_dict, pair_coordinates, spatial_resection, perspec
 
 
 def get_arguments(
-        images_path="../machine_learning/dataset/deployment/2022-08-25/images",
+        images_path="../machine_learning/dataset/deployment/2022-11-11/images",
         camera_config_path="./camera_config.yml",
         aruco_coordinates_path="./aruco_markers_3D.txt",
         point_cloud3D="./total_levee_gbc.xyz",
-        save_path="../machine_learning/results/deployment/2022-08-25",
+        save_path="../machine_learning/results/deployment/2022-11-11",
         plot_permission=True
         ):
     
@@ -36,13 +36,14 @@ def main(args):
     for root, dir, files in os.walk(args.images_path, topdown=True):
         for file in files:
             if file.endswith(".jpg"):
-                file = "2022-08-25-1437.jpg"
+                # file = "2022-11-11-0911.jpg"
                 print(f"Start Processing {file}")
                 image = cv2.imread(os.path.join(root, file))
                 aruco_3D_dict = aruco_3D_to_dict(args.aruco_coordinates_path)
 
                 ids, image_points, object_points = pair_coordinates(image, aruco_3D_dict,
                                                                     plot=args.plot_permission, save_path=args.save_path)
+                # print(len(ids)); continue
 
                 if len(ids) >= 6:
 
@@ -53,11 +54,14 @@ def main(args):
 
                     if point_cloud3D.shape[1] > 3:
                         point_cloud3D = point_cloud3D[:, :3]
-                    
+
                     point_cloud2D = perspective_projection(point_cloud3D, rvec, tvec, camera_matrix, dist_coeffs)
 
-                    save_path = os.path.join(args.save_path, f'{file.split(".")[0]}.pts')
-                    np.savetxt(save_path, point_cloud2D, delimiter=',')
+                    x = input('Do you want to save 2D point cloud:')
+                    if (x.lower() == 'yes') or (x.lower() == 'y'):
+                        save_path = os.path.join(args.save_path, f'{file.split(".")[0]}.pts')
+                        np.savetxt(save_path, point_cloud2D, delimiter=',')
+                        print(f"Point Cloud 2D has been created based on image: {file}")
 
                     if args.plot_permission:
                         for val in point_cloud2D:
@@ -68,14 +72,14 @@ def main(args):
                         cv2.imshow("Image", resized_image)
                         cv2.waitKey(0)
                         cv2.destroyAllWindows()
-                        
+
                         x = input('Do you want to save:')
                         if (x.lower() == 'yes') or (x.lower() == 'y'):
                             file_name = input('Please enter the file name:')
                             save_path = os.path.join(args.save_path, f"{file_name}.png")
                             cv2.imwrite(save_path, image)
 
-                    print(f"Point Cloud 2D has been created based on image: {file}")
+                    print("Finish!")
                     exit()
 
 if __name__ == "__main__":
