@@ -9,11 +9,11 @@ import os
 
 
 def get_arguments(
-        edges_path="./results/deployment/2022-11-10/edges",
+        edges_path="./results/deployment/2022-11-11/edges",
         point_cloud3D="../spatial_resection/total_levee_gbc.xyz",
-        point_cloud2D="./results/deployment/2022-11-10/2022-11-10-1214/2022-11-10-1214.pts",
-        save_path="../machine_learning/results/deployment/2022-11-10",
-        plot_permission=False
+        point_cloud2D="./results/deployment/2022-11-11/2022-11-11-0911/2022-11-11-0911.pts",
+        save_path="../machine_learning/results/deployment/2022-11-11",
+        plot_permission=True
         ):
 
     parser = argparse.ArgumentParser(description=f"Spatial resection on captured images.")
@@ -79,7 +79,7 @@ def plot_stats(file_name, save_path, left_shore, right_shore):
     sub2 = fig.add_subplot(2, 2, 2)  # two rows, two columns, second cell
     right_shore_3to4m = right_shore[(right_shore[:, 0] < 4.0) & (right_shore[:, 0] > 3.0)]
     left_shore_3to4m = left_shore[(left_shore[:, 0] < 4.0) & (left_shore[:, 0] > 3.0)]
-    sub2.boxplot([left_shore_3to4m, right_shore_3to4m])
+    sub2.boxplot([left_shore_3to4m[:, 2], right_shore_3to4m[:, 2]])
     sub2.set_xticklabels(['Cam-L-BL', 'Cam-R-BL'])
     sub2.tick_params(axis='x', labelrotation=45, labelsize=12)
     sub2.set_title('Water Level Fluctuation (3.0 to 4.0 m)')
