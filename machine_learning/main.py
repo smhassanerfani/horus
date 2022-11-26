@@ -9,10 +9,10 @@ import os
 
 
 def get_arguments(
-        edges_path="./results/deployment/2022-08-25/edges",
+        edges_path="./results/deployment/2022-11-10/edges",
         point_cloud3D="../spatial_resection/total_levee_gbc.xyz",
-        point_cloud2D="./results/deployment/2022-08-25/2022-08-25-1437.pts",
-        save_path="../machine_learning/results/deployment/2022-08-25",
+        point_cloud2D="./results/deployment/2022-11-10/2022-11-10-1214/2022-11-10-1214.pts",
+        save_path="../machine_learning/results/deployment/2022-11-10",
         plot_permission=True
         ):
 
@@ -62,18 +62,17 @@ def estimate_stage(image, point_cloud2d, point_cloud3d):
 
 def plot_stats(file_name, save_path, left_shore, right_shore):
     
-    fig = plt.figure(figsize=(16, 9))
-
-    x = np.linspace(0., 5., 100)
-    y = np.sin(x)
+    fig = plt.figure(figsize=(10, 9))
 
     plt.subplots_adjust(wspace=0.25, hspace=0.25)
 
     sub1 = fig.add_subplot(2, 2, 1)  # two rows, two columns, fist cell
-    sub1.boxplot(right_shore[:, 2])
-    sub1.set_title('Stage Fluctuation along Right Shore')
-    sub1.set_ylabel('Stage (m)')
-    sub1.set_ylim(0, 0.45)
+    sub1.boxplot([left_shore[:, 2], right_shore[:, 2]])
+    sub1.set_xticklabels(['Cam-L-BL', 'Cam-R-BL'])
+    sub1.tick_params(axis='x', labelrotation=45, labelsize=12)
+    # sub1.set_title('Water Level Fluctuation along the Stream Flow')
+    sub1.set_ylabel('Water Level (m)', fontsize=14)
+    sub1.set_ylim(0, 0.50)
     sub1.grid(True)
 
     # Create second axes, the top-left plot with orange plot
@@ -81,18 +80,18 @@ def plot_stats(file_name, save_path, left_shore, right_shore):
     sub2.boxplot(left_shore[:, 2])
     sub2.set_title('Stage Fluctuation along Left Shore')
     sub2.set_ylabel('Stage (m)')
-    sub2.set_ylim(0, 0.45)
+    sub2.set_ylim(0, 0.80)
     sub2.grid(True)
 
     # Create third axes, a combination of third and fourth cell
     sub3 = fig.add_subplot(2, 2, (3, 4))  # two rows, two colums, combined third and fourth cell
-    sub3.scatter(right_shore[:, 0], right_shore[:, 2], color="teal", label="Right Bank")
-    sub3.scatter(left_shore[:, 0], left_shore[:, 2], color="magenta", label="Left Bank")
-    sub3.set_title('Stage Fluctuation along the Creek')
-    sub3.set_xlabel('Distance (m)')
-    sub3.set_ylabel('Stage (m)')
-    sub3.set_ylim(0, 0.45)
-    sub3.set_xlim(0.5, 6.5)
+    sub3.scatter(right_shore[:, 0], right_shore[:, 2], color="lightcoral", label="Right Bank")
+    sub3.scatter(left_shore[:, 0], left_shore[:, 2], color="teal", label="Left Bank")
+    # sub3.set_title('Stage Fluctuation along the Creek')
+    sub3.set_xlabel('Distance (m)', fontsize=14)
+    sub3.set_ylabel('Water Level (m)')
+    sub3.set_ylim(0, 0.80)
+    sub3.set_xlim(1.0, 6.5)
     sub3.grid(True)
     sub3.legend()
 
@@ -189,9 +188,12 @@ def main(args):
                     plot_section(file, args.save_path, left_shore, right_shore)
                     visualization(image, file, args.save_path, point_cloud2d, left_shore, right_shore)
 
+                right_shore = right_shore[(right_shore[:, 0] < 4.0) & (right_shore[:, 0] > 3.0)]
+                left_shore = left_shore[(left_shore[:, 0] < 4.0) & (left_shore[:, 0] > 3.0)]
+
                 records[file.split(".")[0]] = [left_shore[:, 2].mean(), stats.mode(left_shore[:, 2])[0][0], right_shore[:, 2].mean(), stats.mode(right_shore[:, 2])[0][0]]
 
-    save_path = os.path.join(args.save_path, "water_stage.csv")
+    save_path = os.path.join(args.save_path, "water_level.csv")
     with open(save_path, 'w') as f:
         for key, value in records.items():
             f.write(f"{key}, {value[0]}, {value[1]}, {value[2]}, {value[3]}\n")
