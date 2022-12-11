@@ -10,20 +10,25 @@ The "Eye of Horus" is a concept and symbol in ancient Egyptian religion that rep
 Inspired by the concept &ndash; in this project &ndash; "Eye of Horus" is a vision-based framework for measuring characteristics of streamflow like water level from time-lapse images. Follwoing animations are related to setup deployment on Aug 19, 2022, Nov 10, 2022 and Nov 11, 2022. The segmented stream flow, water level fluctuation at cross-section, and stage hydrographs are based on the captured images at one-minute intervals.
 
 <p align="center">
+  <img width="100%" height="100%" src="https://github.com/smhassanerfani/horus/blob/main/wiki/agu22.png"><br>
+  Figure 2. The AGU Fall Meeting 2022 Poster.
+</p>
+
+<p align="center">
   <img width="100%" height="100%" src="https://github.com/smhassanerfani/svisions/blob/main/wiki/2022-08-19.gif"><br>
-  Figure 2. Setup deployment on Aug 19, 2022, time-lapse images captured by Raspberry Pi camera Module V2.
+  Figure 3. Setup deployment on Aug 19, 2022, time-lapse images captured by Raspberry Pi camera Module V2.
 </p>
 
 
 <p align="center">
   <img width="100%" height="100%" src="https://github.com/smhassanerfani/svisions/blob/main/wiki/2022-11-10.gif"><br>
-  Figure 3. Setup deployment on Nov 10, 2022, time-lapse images captured by Raspberry Pi camera Module V2.
+  Figure 4. Setup deployment on Nov 10, 2022, time-lapse images captured by Raspberry Pi camera Module V2.
 </p>
 
 
 <p align="center">
   <img width="100%" height="100%" src="https://github.com/smhassanerfani/svisions/blob/main/wiki/2022-11-11.gif"><br>
-  Figure 4. Setup deployment on Nov 11, 2022, time-lapse images captured by Raspberry Pi camera Module V2.
+  Figure 5. Setup deployment on Nov 11, 2022, time-lapse images captured by Raspberry Pi camera Module V2.
 </p>
 
 ## Table of contents
