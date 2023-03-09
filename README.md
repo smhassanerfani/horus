@@ -15,12 +15,6 @@ Inspired by the concept &ndash; in this project &ndash; "Eye of Horus" is a visi
 </p>
 
 <p align="center">
-  <img width="75%" height="75%" src="https://github.com/smhassanerfani/horus/blob/main/wiki/ROI.png"><br>
-  The study area at Rocky Branch.
-</p>
-
-
-<p align="center">
   <img width="100%" height="100%" src="https://github.com/smhassanerfani/svisions/blob/main/wiki/2022-08-19.gif"><br>
   Figure 3. Setup deployment on Aug 19, 2022, time-lapse images captured by Raspberry Pi camera Module V2.
 </p>
