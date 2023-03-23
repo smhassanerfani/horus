@@ -6,11 +6,11 @@ from utils import aruco_3D_to_dict, pair_coordinates, spatial_resection, perspec
 
 
 def get_arguments(
-        images_path="../machine_learning/dataset/deployment/2022-11-11/images",
+        images_path="../machine_learning/dataset/deployment/2023-03-22",
         camera_config_path="./camera_config.yml",
-        aruco_coordinates_path="./aruco_markers_3D.txt",
-        point_cloud3D="./total_levee_gbc.xyz",
-        save_path="../machine_learning/results/deployment/2022-11-11",
+        aruco_coordinates_path="./ArUco_3D_20230322.txt",
+        point_cloud3D="./pt_gbc.xyz",
+        save_path="../machine_learning/results/deployment/2023-03-22",
         plot_permission=True
         ):
     
@@ -65,6 +65,12 @@ def main(args):
 
                     if args.plot_permission:
                         for val in point_cloud2D:
+                            # OpenCV reads images as (Height, Width, Channels) `(1440, 1920, 3)`
+                            x_coor = int(val[0]) # x-axis of 2D point cloud is width of the image
+                            y_coor = int(val[1]) # y-axis of 2D point cloud is height of the image
+                            if x_coor < 0 or y_coor < 0 or x_coor >= image.shape[1] or y_coor >= image.shape[0]:
+                                continue  # skipp this point
+
                             cv2.putText(image, ".", (int(val[0]), int(val[1])), cv2.FONT_HERSHEY_PLAIN, 1, (75, 20, 20), 1)
 
 
