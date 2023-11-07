@@ -91,7 +91,7 @@ Distortion Coefficients: (k<sub>1</sub>, k<sub>2</sub>, p<sub>1</sub>, p<sub>2</
 Intrinsic parameters are specific to a camera. They include information like focal length (f<sub>x</sub>, f<sub>y</sub>) and optical centers (c<sub>x</sub>, c<sub>y</sub>). The focal length and optical centers can be used to create a camera matrix, which can be used to remove distortion due to the lenses of a specific camera. The camera matrix is unique to a specific camera, so once calculated, it can be reused on other images taken by the same camera. It is expressed as a 3x3 matrix [[3]](#3).
 
 #### Extrinsic parameters
-Extrinsic parameters corresponds to rotation and translation vectors which translates a coordinates of a 3D point to a coordinate system [[3]](#3).
+Extrinsic parameters correspond to rotation and translation vectors which translate the coordinates of a 3D point to a coordinate system [[3]](#3).
 
 ### Spatial Resection
 <!--   https://learnopencv.com/head-pose-estimation-using-opencv-and-dlib/ -->
